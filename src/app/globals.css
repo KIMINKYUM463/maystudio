@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: NanumMyeongjo;
+  src: url("/fonts/NanumMyeongjo-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-display: swap;
+}
+
+@theme {
+  --color-bg: #0b0b10;
+  --color-surface: #13131a;
+  --color-surface-2: #1b1b24;
+  --color-surface-3: #262632;
+  --color-line: #2a2a36;
+  --color-fg: #f4f2ee;
+  --color-muted: #a9a7b3;
+  --color-faint: #6f6d7a;
+  --color-accent: #ff6b4a;
+  --color-accent-strong: #ff5530;
+  --color-success: #3ddc97;
+  --color-warning: #ffb547;
+  --color-danger: #ff5a6a;
+  --font-sans: var(--font-pretendard), "Pretendard", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgb(255 107 74 / 0.08), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgb(124 92 255 / 0.07), transparent 60%),
+    var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  word-break: keep-all;
+}
+
+::selection {
+  background: rgb(255 107 74 / 0.35);
+}
+
+input[type="range"] {
+  accent-color: var(--color-accent);
+}
+
+/* Home hero motions used by Dashboard.tsx (hero-enter*) and HeroReel.tsx (hero-reel*). */
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-reel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hero-ken {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes hero-sub-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-glow {
+  0%,
+  100% {
+    background: radial-gradient(circle, rgb(255 107 74 / 0.28), transparent 68%);
+  }
+  50% {
+    background: radial-gradient(circle, rgb(255 107 74 / 0.42), transparent 70%);
+  }
+}
+
+.hero-enter {
+  animation: hero-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-enter-delay {
+  animation: hero-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.hero-reel {
+  animation: hero-reel-enter 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+}
+
+.hero-reel-glow {
+  animation: hero-glow 4.5s ease-in-out infinite;
+}
+
+.hero-reel-ken {
+  animation: hero-ken 1.4s linear both;
+}
+
+.hero-reel-sub {
+  animation: hero-sub-in 0.28s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter,
+  .hero-enter-delay,
+  .hero-reel,
+  .hero-reel-glow,
+  .hero-reel-ken,
+  .hero-reel-sub {
+    animation: none !important;
+  }
+}
