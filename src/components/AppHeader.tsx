@@ -7,6 +7,7 @@ import { cx } from "./ui";
 
 const NAV = [
   { href: "/", label: "내 숏폼", segments: [null, "projects"] },
+  { href: "/travel-map", label: "숙소 지도", segments: ["travel-map"] },
   { href: "/links", label: "링크 페이지", segments: ["links"] },
   { href: "/settings", label: "설정", segments: ["settings"] },
 ] as const;
@@ -15,14 +16,14 @@ const NAV = [
 function HeaderBar({ segment }: { segment?: string | null }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-bg/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-5">
-        <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:gap-6 sm:px-5">
+        <Link href="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight">
           <span className="flex size-7 items-center justify-center rounded-lg bg-accent text-sm text-white">M</span>
-          <span>
-            MayStudio <span className="font-medium text-muted">여행 숏폼 팩토리</span>
+          <span className="hidden sm:inline">
+            MayStudio <span className="hidden font-medium text-muted lg:inline">여행 숏폼 팩토리</span>
           </span>
         </Link>
-        <nav className="ml-auto flex items-center gap-1 text-sm">
+        <nav className="ml-auto flex min-w-0 items-center gap-0.5 overflow-x-auto text-xs sm:gap-1 sm:text-sm">
           {NAV.map((item) => {
             const active = segment !== undefined && (item.segments as readonly (string | null)[]).includes(segment);
             return (
@@ -30,7 +31,7 @@ function HeaderBar({ segment }: { segment?: string | null }) {
                 key={item.href}
                 href={item.href}
                 className={cx(
-                  "rounded-lg px-3 py-1.5 font-medium transition",
+                  "shrink-0 rounded-lg px-2 py-1.5 font-medium transition sm:px-3",
                   active ? "bg-surface-2 text-fg" : "text-muted hover:text-fg",
                 )}
               >
