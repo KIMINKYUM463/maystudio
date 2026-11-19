@@ -32,7 +32,7 @@ set "CF=cloudflared"
 where cloudflared >nul 2>&1
 if errorlevel 1 set "CF=%LOCALAPPDATA%\cloudflared\cloudflared.exe"
 if exist "%USERPROFILE%\.cloudflared\cert.pem" (
-  start "MayAIStudio 인터넷 연결" cmd /k ""!CF!" tunnel run mayaistudio"
+  start "MayAIStudio 인터넷 연결" "%CF%" tunnel run mayaistudio
 ) else (
   echo 인터넷 연결이 아직 설정되지 않았어요. 이 컴퓨터에서는 http://localhost:3000 으로 쓸 수 있어요.
 )
