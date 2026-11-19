@@ -30,6 +30,7 @@ import {
   type Voice,
 } from "@/lib/types";
 import { THEMES } from "@/remotion/theme";
+import { FONT_CHOICES } from "@/remotion/font-choices";
 import type { StepProps } from "./useProjectEditor";
 import { buildVideoProps } from "@/lib/video/props";
 import { refitReviewShots } from "@/lib/script/review";
@@ -415,6 +416,33 @@ export function StyleStep({
               />
             </Field>
           )}
+          <Field label="자막 글꼴" className="sm:col-span-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5" role="radiogroup" aria-label="자막 글꼴">
+              {[{ id: "auto", family: "", label: "기본", mood: "스타일에 맞춰요" }, ...FONT_CHOICES].map((f) => {
+                const active = style.font === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setStyle({ font: f.id as Style["font"] })}
+                    className={cx(
+                      "rounded-xl border px-3 py-2.5 text-left transition",
+                      active ? "border-accent bg-accent/5 ring-2 ring-accent/20" : "border-line hover:border-accent/40",
+                    )}
+                  >
+                    <span className="block truncate text-lg leading-tight" style={f.family ? { fontFamily: f.family } : { fontWeight: 800 }}>
+                      숲속 노천탕
+                    </span>
+                    <span className={cx("mt-1 block text-[11px] font-semibold", active ? "text-accent" : "text-muted")}>
+                      {f.label} · {f.mood}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
           <Field label="워터마크 (인스타 아이디)" htmlFor="watermark">
             <input
               id="watermark"

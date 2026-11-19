@@ -1,4 +1,5 @@
-import type { TemplateId } from "../lib/types";
+import type { Style, TemplateId } from "../lib/types";
+import { fontFamilyFor } from "./font-choices";
 
 export const FONT = {
   sans: "Pretendard",
@@ -98,3 +99,16 @@ export const THEMES: Record<TemplateId, Theme> = {
     overlay: "pill",
   },
 };
+
+/** The template's look with the user's picked font (if any) on captions and spoken subtitles. */
+export function themeFor(style: Pick<Style, "template" | "font">): Theme {
+  const base = THEMES[style.template];
+  const family = fontFamilyFor(style.font);
+  if (!family) return base;
+  return {
+    ...base,
+    captionFont: family,
+    captionWeight: 400,
+    ...(base.subtitles ? { subtitles: { ...base.subtitles, font: family } } : {}),
+  };
+}

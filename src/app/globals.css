@@ -8,6 +8,55 @@
   font-display: swap;
 }
 
+/* Picked subtitle fonts (src/remotion/font-choices.ts); the picker previews each in its own face. */
+@font-face {
+  font-family: GmarketSansBold;
+  src: url("/fonts/gmarket-sans-bold.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: DoHyeon;
+  src: url("/fonts/do-hyeon-regular.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: SBAggroBold;
+  src: url("/fonts/sb-aggro-bold.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: TmonMonsori;
+  src: url("/fonts/tmon-monsori-black.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Cafe24ProSlimMax;
+  src: url("/fonts/cafe24-pro-slim-max.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: GangwonModuBold;
+  src: url("/fonts/gangwon-modu-bold.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: GowunDodum;
+  src: url("/fonts/gowun-dodum-regular.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: NanumGalmaetgeul;
+  src: url("/fonts/nanum-handwriting-galmaetgeul.ttf") format("truetype");
+  font-display: swap;
+}
+
 @font-face {
   font-family: NanumMyeongjo;
   src: url("/fonts/NanumMyeongjo-ExtraBold.ttf") format("truetype");

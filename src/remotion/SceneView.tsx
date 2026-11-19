@@ -190,7 +190,8 @@ const SubtitleScene: React.FC<SceneProps> = ({ scene, theme, style }) => {
     [scene.narration, scene.caption, scene.durationInFrames, maxChars],
   );
   if (!theme.subtitles) return null;
-  const look = bold ? BOLD_SUBTITLES : { ...theme.subtitles, stroke: 0 };
+  // A picked font replaces the bold preset's font too; size and outline stay.
+  const look = bold ? { ...BOLD_SUBTITLES, font: theme.subtitles.font === FONT.serif ? BOLD_SUBTITLES.font : theme.subtitles.font } : { ...theme.subtitles, stroke: 0 };
   return (
     <Subtitles
       chunks={chunks}

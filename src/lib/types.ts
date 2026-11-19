@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FONT_CHOICE_IDS } from "../remotion/font-choices";
 import { DEFAULT_REPLICATE_MODEL } from "./replicate-models";
 
 /** "review": first-person story reel benchmarked on @heo.jinny.gogo (spoken subtitles, hard cuts, cover + carousel). */
@@ -206,6 +207,8 @@ export const styleSchema = z.object({
   /** Flash, location tag, number highlight, progress bar, save sticker. */
   motion: z.boolean().default(true),
   cutPace: z.enum(["fast", "normal", "slow"]).default("normal"),
+  /** Picked subtitle/caption font ("auto" = the template's own). */
+  font: z.enum(["auto", ...FONT_CHOICE_IDS]).default("auto"),
   /** One-click creation also turns the water/signature photos into AI clips (Replicate, billed per clip). */
   animatePhotos: z.boolean().default(false),
   /** Script generation adds 1~2 free scenery shots (CC0/BY/BY-SA) that fit the lines, credited in the caption. */
