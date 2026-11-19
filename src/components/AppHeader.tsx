@@ -9,8 +9,6 @@ import { cx } from "./ui";
 
 const NAV = [
   { href: "/", label: "내 숏폼", segments: [null, "projects"] },
-  { href: "/stays", label: "숙소 추천", segments: ["stays"] },
-  { href: "/travel-map", label: "숙소 지도", segments: ["travel-map"] },
   { href: "/links", label: "링크 페이지", segments: ["links"] },
 ] as const;
 
