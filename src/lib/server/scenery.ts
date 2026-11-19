@@ -42,12 +42,13 @@ export function sceneryCandidates<T extends { title?: string | null; url: string
 }
 
 const CHECK_PROMPT = (query: string) =>
-  `Is this a real, wide photograph of natural outdoor scenery that matches "${query}" (landscape, sky, forest, mountains, water)?
-Answer false for close-ups, textures, abstract or artistic shots, any building or facility, people, text or logos.
+  `Is this mainly an outdoor nature or landscape photo that roughly fits "${query}"?
+Say false only if: a building, pool, bath or other facility is the main subject; a person is the main subject;
+it is a frost/ice/texture close-up or abstract pattern; or it shows text or logos.
 JSON only: {"ok":true} or {"ok":false}`;
 
 /** The vision AI confirms the photo really is plain scenery (titles lie: "Pine Forest" was frost on glass). */
-async function looksLikeScenery(bytes: Buffer, query: string, settings: Settings): Promise<boolean> {
+export async function looksLikeScenery(bytes: Buffer, query: string, settings: Settings): Promise<boolean> {
   if (!visionReady(settings)) return true;
   try {
     const text = await askVision(settings, [{ index: 0, mime: "image/jpeg", data: bytes.toString("base64") }], CHECK_PROMPT(query));

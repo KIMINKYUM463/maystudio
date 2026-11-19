@@ -5,6 +5,7 @@ import { readJsonBody, route } from "@/lib/server/http";
 import { blurNewFaces } from "@/lib/server/face-blur";
 import { hasLlm, rewriteWithLlm } from "@/lib/server/llm";
 import { addScenery, removeOldScenery } from "@/lib/server/scenery";
+import { matchShotsByVision } from "@/lib/server/shot-match";
 import { getProject, getSettings, nextLinkNumber, saveProject } from "@/lib/server/store";
 import { clearNarration } from "@/lib/server/tts";
 import { hookAngleSchema } from "@/lib/types";
@@ -46,6 +47,13 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
     } catch (error) {
       warning = `AI 대본 생성에 실패해 템플릿 대본을 사용했습니다. (${error instanceof Error ? error.message : "알 수 없는 오류"})`;
     }
+  }
+
+  // Which photo shows on which line: by what the photos show (vision AI), not by their names.
+  try {
+    scenes = await matchShotsByVision(project, scenes, settings);
+  } catch (error) {
+    console.error("[shots]", error);
   }
 
   // Free scenery that fits the lines, swapped fresh on every regeneration (never blocks the script).
