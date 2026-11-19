@@ -24,16 +24,26 @@ async function setJob(id: string, assetId: string, animateJobId: string | undefi
   }));
 }
 
-async function attachClip(id: string, assetId: string, buffer: Buffer): Promise<Project> {
+/**
+ * Attaches the finished clip of job `jobId`. Several pollers (two tabs, or the live and dev servers) can
+ * finish the same job at once: only the one that still sees the job pending attaches; the others drop
+ * their copy, so the photo never points at a file another poller deleted.
+ */
+async function attachClip(id: string, assetId: string, jobId: string, buffer: Buffer): Promise<Project> {
   const videoFile = await saveVideoClip(id, assetId, buffer);
   let previous: string | undefined;
+  let attached = false;
   try {
-    return await updateProject(id, (p) => {
+    const project = await updateProject(id, (p) => {
       const asset = p.assets.find((a) => a.id === assetId);
       if (!asset) throw new BadRequestError("사진을 찾을 수 없습니다.");
+      if (asset.animateJobId !== jobId) return p;
+      attached = true;
       previous = asset.videoFile;
       return { ...p, assets: p.assets.map((a) => (a.id === assetId ? { ...a, videoFile, animateJobId: undefined } : a)) };
     });
+    if (!attached) await deleteProjectFile(id, videoFile);
+    return project;
   } catch (error) {
     await deleteProjectFile(id, videoFile);
     throw error;
@@ -70,7 +80,7 @@ export async function pollAssetAnimate(id: string, assetId: string): Promise<Ani
   if (prediction.status === "succeeded") {
     const url = outputFileUrl(prediction.output);
     if (!url) return { project: await setJob(id, assetId, undefined), status: "failed", error: "Replicate가 영상 주소를 주지 않았어요." };
-    return { project: await attachClip(id, assetId, await downloadPredictionFile(url)), status: "succeeded" };
+    return { project: await attachClip(id, assetId, asset.animateJobId, await downloadPredictionFile(url)), status: "succeeded" };
   }
   if (prediction.status === "failed" || prediction.status === "canceled") {
     return {

@@ -483,6 +483,12 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                     {asset.videoFile ? (
                       // The AI clip plays on its own (muted, looping) so the card shows what the reel will show.
                       <video
+                        // React doesn't put `muted` on the element before load, so browsers block autoplay; force it.
+                        ref={(el) => {
+                          if (!el) return;
+                          el.muted = true;
+                          void el.play().catch(() => {});
+                        }}
                         src={projectFileUrl(project.id, asset.videoFile)}
                         poster={projectFileUrl(project.id, asset.file)}
                         autoPlay
