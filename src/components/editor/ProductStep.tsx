@@ -8,6 +8,7 @@ import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
 import { videoPoster } from "@/lib/client/video-poster";
 import { planMediaUpload } from "@/lib/media-pair";
 import { animateTargets, type PhotoGroup } from "@/lib/photo-groups";
+import { CLIP_COST_USD, DEFAULT_REPLICATE_MODEL, KRW_PER_USD } from "@/lib/replicate-models";
 import { replicateReady, visionReady } from "@/lib/settings-view";
 import { CATEGORIES, MAX_ASSETS, type Category, type Product, type Project } from "@/lib/types";
 import { animatePath, AssetVideoClip, VIDEO_ACCEPT, waitForAnimate, type AnimateResult } from "./AssetVideoClip";
@@ -69,6 +70,8 @@ export function ProductStep({ project, editor, settings }: StepProps) {
   const [batching, setBatching] = useState(false);
   /** "all" while mosaicking, or the asset id being restored. */
   const [facing, setFacing] = useState<string | null>(null);
+  /** Photos ticked for one batch of AI clips. */
+  const [picked, setPicked] = useState<Set<string>>(new Set());
   const [classifying, setClassifying] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -242,8 +245,8 @@ export function ProductStep({ project, editor, settings }: StepProps) {
     }
   }
 
-  async function animateAll() {
-    const targets = animateTargets(assets);
+  async function animateAll(chosen?: typeof assets) {
+    const targets = chosen ?? animateTargets(assets);
     if (targets.length === 0) return;
     setBatching(true);
     let ok = 0;
@@ -258,10 +261,14 @@ export function ProductStep({ project, editor, settings }: StepProps) {
         }
       }
       if (ok > 0) toast.success(`AI 영상 ${ok}개를 붙였어요.`);
+      if (chosen) setPicked(new Set());
     } finally {
       setBatching(false);
     }
   }
+
+  const pickedAssets = assets.filter((a) => picked.has(a.id));
+  const clipCost = CLIP_COST_USD[settings?.replicateModel ?? ""] ?? CLIP_COST_USD[DEFAULT_REPLICATE_MODEL];
 
   return (
     <div className="flex flex-col gap-5">
@@ -427,7 +434,19 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                 />
                 대본에 맞는 무료 풍경 컷 넣기
               </label>
-              {canReplicate && animateTargets(assets).length > 0 ? (
+              {canReplicate && pickedAssets.length > 0 ? (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => void animateAll(pickedAssets)}
+                  loading={batching}
+                  disabled={uploading}
+                  title={`한 장에 약 $${clipCost} (약 ${Math.round(clipCost * KRW_PER_USD)}원) · Replicate 요금`}
+                >
+                  선택한 {pickedAssets.length}장 AI 영상으로 · 약 {Math.round(pickedAssets.length * clipCost * KRW_PER_USD).toLocaleString("ko-KR")}원
+                </Button>
+              ) : null}
+              {canReplicate && pickedAssets.length === 0 && animateTargets(assets).length > 0 ? (
                 <Button size="sm" onClick={() => void animateAll()} loading={batching} disabled={uploading}>
                   {assets.some((a) => a.group)
                     ? `물놀이·시그니처 ${animateTargets(assets).length}장 AI 영상으로`
@@ -510,6 +529,28 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                     <span className="absolute top-2 left-2 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-bold text-white">
                       {i === 0 ? "1 · 훅" : i + 1}
                     </span>
+                    {canReplicate ? (
+                      <label
+                        className="absolute bottom-2 left-2 flex cursor-pointer items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-[11px] font-bold text-white"
+                        title="체크한 사진을 한 번에 AI 영상으로 만들어요"
+                      >
+                        <input
+                          type="checkbox"
+                          className="size-4 accent-[var(--color-accent)]"
+                          checked={picked.has(asset.id)}
+                          disabled={batching || Boolean(asset.animateJobId)}
+                          onChange={(e) =>
+                            setPicked((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(asset.id);
+                              else next.delete(asset.id);
+                              return next;
+                            })
+                          }
+                        />
+                        AI 영상
+                      </label>
+                    ) : null}
                     {asset.videoFile ? (
                       <span className="absolute top-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
                         영상

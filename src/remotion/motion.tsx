@@ -17,7 +17,18 @@ export function sceneStarts(scenes: VideoScene[], style: Style): number[] {
 }
 
 /** The generated loops differ in loudness; this evens them out so one volume slider fits all. */
-const TRACK_GAIN: Record<Exclude<BgmTrack, "none">, number> = { calm: 0.7, bright: 1.25, lofi: 1.05 };
+// wings tracks measured RMS 0.13~0.15 (generated loops ~0.10~0.20), so they sit near 1.
+const TRACK_GAIN: Record<Exclude<BgmTrack, "none">, number> = {
+  calm: 0.7,
+  bright: 1.25,
+  lofi: 1.05,
+  wings1: 1,
+  wings2: 1,
+  wings3: 0.92,
+  wings4: 0.86,
+  wings5: 0.9,
+  wings6: 0.88,
+};
 
 /** Uploaded music wins; otherwise the chosen built-in loop. Music dips under the narration. */
 export const MusicLayer: React.FC<{ style: Style; bgmSrc: string | null; scenes: VideoScene[] }> = ({ style, bgmSrc, scenes }) => {

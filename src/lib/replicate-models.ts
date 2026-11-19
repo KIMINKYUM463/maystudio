@@ -20,3 +20,15 @@ export const REPLICATE_I2V_MODELS = [
 ] as const;
 
 export type ReplicateModelId = (typeof REPLICATE_I2V_MODELS)[number]["id"];
+
+/**
+ * Rough price of one ~5s clip at the settings the app sends (Wan: 480p default). Shown before a batch.
+ * Wan 2.2 Fast i2v 480p = $0.05 per video (replicate.com/blog/wan-22, 2025); Seedance/Kling are estimates.
+ * shortcut: fixed table, check replicate.com model pages when prices change.
+ */
+export const CLIP_COST_USD: Record<string, number> = {
+  "wan-video/wan-2.2-i2v-fast": 0.05,
+  "bytedance/seedance-1-lite": 0.18,
+  "kwaivgi/kling-v2.5-turbo-pro": 0.35,
+};
+export const KRW_PER_USD = 1400;

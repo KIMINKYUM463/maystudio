@@ -41,6 +41,12 @@ const TRACKS: { id: BgmTrack; label: string; hint: string }[] = [
   { id: "calm", label: "잔잔한 감성", hint: "피아노 · 따뜻한 패드" },
   { id: "bright", label: "산뜻한 여행", hint: "우쿨렐레 · 경쾌한 리듬" },
   { id: "lofi", label: "로파이 휴식", hint: "느긋한 건반 · 레코드 잡음" },
+  { id: "wings1", label: "윙스 BGM 1", hint: "윙스 제작 자료 · 1분 13초" },
+  { id: "wings2", label: "윙스 BGM 2", hint: "윙스 제작 자료 · 1분 2초" },
+  { id: "wings3", label: "윙스 BGM 3", hint: "윙스 제작 자료 · 1분 8초" },
+  { id: "wings4", label: "윙스 BGM 4", hint: "윙스 제작 자료 · 1분 21초" },
+  { id: "wings5", label: "윙스 BGM 5", hint: "윙스 제작 자료 · 1분 4초" },
+  { id: "wings6", label: "윙스 BGM 6", hint: "윙스 제작 자료 · 58초" },
   { id: "none", label: "음악 없음", hint: "인스타에서 붙일게요" },
 ];
 
@@ -511,7 +517,7 @@ export function StyleStep({
       <Card>
         <SectionTitle
           title="배경음악"
-          description="기본 음악 3가지는 프로그램이 직접 만든 곡이라 저작권 걱정이 없어요. 내 음악을 올리면 그걸 먼저 써요."
+          description="잔잔한 감성·산뜻한 여행·로파이는 프로그램이 직접 만든 곡, 윙스 BGM은 윙스 제작 자료 곡이에요. 내 음악을 올리면 그걸 먼저 써요."
           action={
             <div className="flex gap-2">
               {style.bgmFile ? (
