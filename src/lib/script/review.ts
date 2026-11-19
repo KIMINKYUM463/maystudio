@@ -1,4 +1,4 @@
-import { HOOK_ANGLES, MAX_SCENE_SHOTS, type Product, type Project, type Scene, type SceneKind } from "../types";
+import { CUT_PACES, HOOK_ANGLES, MAX_SCENE_SHOTS, type CutPace, type Product, type Project, type Scene, type SceneKind } from "../types";
 import {
   assignPhotos,
   cameraForAsset,
@@ -105,8 +105,13 @@ export function waterFirst<T extends { label: string }>(assets: T[]): T[] {
 
 type Beat = { kind: SceneKind; id: string; match: string; narration: string; caption?: string };
 
+/** Seconds per cut for the project's pace (기본 1.8초). */
+export function shotSecFor(style?: { cutPace?: CutPace }): number {
+  return CUT_PACES[style?.cutPace ?? "normal"];
+}
+
 export function generateReviewScript(
-  project: Pick<Project, "product" | "assets" | "hookAngle">,
+  project: Pick<Project, "product" | "assets" | "hookAngle"> & { style?: { cutPace?: CutPace } },
   seed = Date.now(),
   now = new Date(),
 ): GeneratedScript {
@@ -139,12 +144,13 @@ export function generateReviewScript(
     ...(kicker ? [{ kind: "romance" as const, id: "kicker", match: kicker, narration: kickerLine(kicker, product.visited) }] : []),
     { kind: "outro", id: "closing", match: "", narration: closingLine(audience, vars.season ?? "겨울", product.visited, Math.floor(rand() * 3)) },
   ];
-  // Benchmark cuts every ~1.1s; extra photos are left for the carousel instead of shortening cuts.
+  // One photo per cut at the chosen pace; extra photos are left for the carousel instead of shortening cuts.
+  const shotSec = shotSecFor(project.style);
   const slots: Slot[] = beats.map((b) => ({
     kind: b.kind,
     id: b.id,
     match: b.match,
-    capacity: Math.min(MAX_SCENE_SHOTS, Math.max(1, Math.round(speechSeconds(b.narration) / SHOT_SEC))),
+    capacity: Math.min(MAX_SCENE_SHOTS, Math.max(1, Math.round(speechSeconds(b.narration) / shotSec))),
   }));
   const photos = assignPhotos(waterFirst(reelAssets(assets)), slots, false);
   const assetsById = new Map(assets.map((a) => [a.id, a]));
@@ -197,7 +203,7 @@ function bestMatch<T extends { id: string; label: string }>(narration: string, c
  * quick cuts so footage still changes every ~SHOT_SEC. A line that names a facility ("스케이트장")
  * gets that photo first; the hook keeps its photo since it is also the cover.
  */
-export function refitReviewShots(scenes: Scene[], assets: Project["assets"]): Scene[] {
+export function refitReviewShots(scenes: Scene[], assets: Project["assets"], baseSec: number = SHOT_SEC): Scene[] {
   const ordered = waterFirst(reelAssets(assets));
   const order = ordered.map((a) => a.id);
   // Hook photo first (it is the cover), then lines that name a photo claim it, then the rest keep theirs.
@@ -236,8 +242,8 @@ export function refitReviewShots(scenes: Scene[], assets: Project["assets"]): Sc
   };
   // Design review: repeating photos looks worse than slightly longer cuts. When fresh photos cover
   // under 60% of the cuts needed, cuts stretch to ~1.4s before any photo comes back.
-  const needed = scenes.reduce((sum, s) => sum + Math.max(1, Math.round(speechSeconds(s.narration) / SHOT_SEC)), 0);
-  const shotSec = order.length < needed * 0.6 ? 1.4 : SHOT_SEC;
+  const needed = scenes.reduce((sum, s) => sum + Math.max(1, Math.round(speechSeconds(s.narration) / baseSec)), 0);
+  const shotSec = order.length < needed * 0.6 ? Math.max(1.4, baseSec) : baseSec;
   const byId = new Map(assets.map((a) => [a.id, a]));
   return scenes.map((scene, index) => {
     const durationSec = speechSeconds(scene.narration);

@@ -289,18 +289,24 @@ export const CornerAdLabel: React.FC<{ top?: number; size?: number }> = ({ top =
 );
 
 /** One spoken phrase at a time, hard-switched like the benchmark (no entrance animation). */
-export const Subtitles: React.FC<{ chunks: TimedChunk[]; font: string; size: number; centerY: number; stroke?: number }> = ({
-  chunks,
-  font,
-  size,
-  centerY,
-  stroke = 0,
-}) => {
+/** "1인당 3만원대" → ["1인당 ", "3만원대"]: numbers with their unit, for the accent highlight. */
+const NUMBER = /(\d[\d.,]*\s?(?:만원대|만원|천원|원|점|분|시간|km|개|박|인|%)?)/;
+
+export const Subtitles: React.FC<{
+  chunks: TimedChunk[];
+  font: string;
+  size: number;
+  centerY: number;
+  stroke?: number;
+  /** Motion graphics on: numbers in the accent colour and a quick pop as each phrase appears. */
+  accent?: string;
+}> = ({ chunks, font, size, centerY, stroke = 0, accent }) => {
   const frame = useCurrentFrame();
   const current = chunks.find((c) => frame >= c.from && frame < c.from + c.durationInFrames);
   if (!current) return null;
   // Benchmark subtitles carry no punctuation ("경남 남해," → "경남 남해").
   const text = current.text.replace(/[,.]+$/, "");
+  const pop = accent ? interpolate(frame - current.from, [0, 4], [0.9, 1], { extrapolateRight: "clamp" }) : 1;
   return (
     <AbsoluteFill style={{ alignItems: "center", pointerEvents: "none" }}>
       {/* Soft band behind the subtitle line so it reads over bright skies and busy foliage. */}
@@ -313,7 +319,7 @@ export const Subtitles: React.FC<{ chunks: TimedChunk[]; font: string; size: num
         style={{
           position: "absolute",
           top: `${centerY * 100}%`,
-          transform: "translateY(-50%)",
+          transform: `translateY(-50%) scale(${pop})`,
           padding: "0 60px",
           fontFamily: font,
           fontWeight: stroke ? 400 : 800,
@@ -329,7 +335,9 @@ export const Subtitles: React.FC<{ chunks: TimedChunk[]; font: string; size: num
             : "0 2px 3px rgba(0,0,0,0.95), 0 0 14px rgba(0,0,0,0.75), 0 0 36px rgba(0,0,0,0.45)",
         }}
       >
-        {text}
+        {accent
+          ? text.split(NUMBER).map((part, i) => (i % 2 ? <span key={i} style={{ color: accent }}>{part}</span> : part))
+          : text}
       </div>
     </AbsoluteFill>
   );

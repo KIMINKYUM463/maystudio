@@ -22,6 +22,9 @@ import {
   TYPECAST_VOICES,
   OPENAI_VOICES,
   TEMPLATE_IDS,
+  CUT_PACES,
+  type BgmTrack,
+  type CutPace,
   type Project,
   type Style,
   type Voice,
@@ -29,9 +32,23 @@ import {
 import { THEMES } from "@/remotion/theme";
 import type { StepProps } from "./useProjectEditor";
 import { buildVideoProps } from "@/lib/video/props";
+import { refitReviewShots } from "@/lib/script/review";
 import { ChannelDecorDialog } from "./ChannelDecorDialog";
 import { VoiceAvatar } from "./VoiceAvatar";
 import { VoicePickerDialog } from "./VoicePickerDialog";
+
+const TRACKS: { id: BgmTrack; label: string; hint: string }[] = [
+  { id: "calm", label: "잔잔한 감성", hint: "피아노 · 따뜻한 패드" },
+  { id: "bright", label: "산뜻한 여행", hint: "우쿨렐레 · 경쾌한 리듬" },
+  { id: "lofi", label: "로파이 휴식", hint: "느긋한 건반 · 레코드 잡음" },
+  { id: "none", label: "음악 없음", hint: "인스타에서 붙일게요" },
+];
+
+const PACES: { id: CutPace; label: string }[] = [
+  { id: "fast", label: "빠르게" },
+  { id: "normal", label: "보통" },
+  { id: "slow", label: "느리게" },
+];
 
 const ACCENTS = [
   "#FF6B4A",
@@ -494,7 +511,7 @@ export function StyleStep({
       <Card>
         <SectionTitle
           title="배경음악"
-          description="저작권 걱정 없는 음원(유튜브 오디오 보관함 등)을 쓰세요. 인스타 앱에서 음악을 붙일 거라면 비워두세요."
+          description="기본 음악 3가지는 프로그램이 직접 만든 곡이라 저작권 걱정이 없어요. 내 음악을 올리면 그걸 먼저 써요."
           action={
             <div className="flex gap-2">
               {style.bgmFile ? (
@@ -509,20 +526,20 @@ export function StyleStep({
                         api(`/api/projects/${project.id}/bgm`, {
                           method: "DELETE",
                         }),
-                      "배경음악을 뺐어요.",
+                      "올린 음악을 뺐어요.",
                     )
                   }
                 >
-                  빼기
+                  올린 음악 빼기
                 </Button>
               ) : null}
               <Button
                 size="sm"
-                variant="primary"
+                variant="ghost"
                 loading={busy === "bgm"}
                 onClick={() => bgmInput.current?.click()}
               >
-                {style.bgmFile ? "바꾸기" : "음악 올리기"}
+                {style.bgmFile ? "음악 바꾸기" : "내 음악 올리기"}
               </Button>
             </div>
           }
@@ -535,33 +552,95 @@ export function StyleStep({
           onChange={(e) => uploadFile("bgm", e.target, "배경음악을 넣었어요.")}
         />
         {style.bgmFile ? (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <audio
-              controls
-              src={projectFileUrl(project.id, style.bgmFile)}
-              className="h-10 w-full sm:max-w-xs"
-            />
-            <Field
-              label={`볼륨 ${Math.round(style.bgmVolume * 100)}%`}
-              className="flex-1"
-            >
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={style.bgmVolume}
-                onChange={(e) =>
-                  setStyle({ bgmVolume: Number(e.target.value) })
-                }
-              />
-            </Field>
+          <div className="mb-4 flex flex-col gap-2 rounded-xl border border-accent/30 bg-accent/5 p-3 sm:flex-row sm:items-center">
+            <Badge tone="success">올린 음악 사용 중</Badge>
+            <audio controls src={projectFileUrl(project.id, style.bgmFile)} className="h-10 w-full sm:max-w-xs" />
           </div>
-        ) : (
-          <p className="text-sm text-faint">
-            배경음악 없음 (MP3·WAV·M4A, 20MB까지)
-          </p>
-        )}
+        ) : null}
+        <div className={cx("grid gap-2 sm:grid-cols-2 lg:grid-cols-4", style.bgmFile && "opacity-50")} role="radiogroup" aria-label="기본 배경음악">
+          {TRACKS.map((t) => {
+            const active = style.bgmTrack === t.id;
+            return (
+              <div
+                key={t.id}
+                className={cx(
+                  "flex flex-col gap-2 rounded-xl border p-3 transition",
+                  active ? "border-accent bg-accent/5 ring-2 ring-accent/20" : "border-line hover:border-accent/40",
+                )}
+              >
+                <button type="button" role="radio" aria-checked={active} onClick={() => setStyle({ bgmTrack: t.id })} className="text-left">
+                  <p className={cx("text-sm font-bold", active ? "text-accent" : "text-fg")}>{t.label}</p>
+                  <p className="text-xs text-muted">{t.hint}</p>
+                </button>
+                {t.id !== "none" ? <audio controls preload="none" src={`/audio/bgm-${t.id}.mp3`} className="h-8 w-full" /> : null}
+              </div>
+            );
+          })}
+        </div>
+        <Field label={`음악 볼륨 ${Math.round(style.bgmVolume * 100)}%`} className="mt-4">
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={style.bgmVolume}
+            onChange={(e) => setStyle({ bgmVolume: Number(e.target.value) })}
+          />
+        </Field>
+      </Card>
+
+      <Card>
+        <SectionTitle
+          title="효과음 · 모션그래픽 · 컷 속도"
+          description="장면이 바뀔 때 효과음과 움직이는 그래픽을 넣어 덜 밋밋하게 만들어요."
+        />
+        <div className="flex flex-col gap-4">
+          <label className="flex items-start gap-3">
+            <input type="checkbox" className="mt-1 size-4 accent-[var(--color-accent)]" checked={style.sfx} onChange={(e) => setStyle({ sfx: e.target.checked })} />
+            <span>
+              <span className="block text-sm font-bold">효과음</span>
+              <span className="block text-xs text-muted">첫 장면 &lsquo;쿵&rsquo;, 장면 바뀔 때 &lsquo;휙&rsquo;, 마지막 문장 &lsquo;딩&rsquo;</span>
+            </span>
+          </label>
+          {style.sfx ? (
+            <Field label={`효과음 볼륨 ${Math.round(style.sfxVolume * 100)}%`} className="ml-7">
+              <input type="range" min={0} max={1} step={0.05} value={style.sfxVolume} onChange={(e) => setStyle({ sfxVolume: Number(e.target.value) })} />
+            </Field>
+          ) : null}
+          <label className="flex items-start gap-3">
+            <input type="checkbox" className="mt-1 size-4 accent-[var(--color-accent)]" checked={style.motion} onChange={(e) => setStyle({ motion: e.target.checked })} />
+            <span>
+              <span className="block text-sm font-bold">모션그래픽</span>
+              <span className="block text-xs text-muted">시작 플래시, 📍지역 태그, 자막 속 숫자 강조, 진행 바, 마지막 &lsquo;저장 필수&rsquo; 스티커</span>
+            </span>
+          </label>
+          <div>
+            <p className="text-sm font-bold">사진 컷 속도</p>
+            <p className="text-xs text-muted">사진이 바뀌는 간격이에요. 바꾸면 장면마다 들어가는 사진 수가 바로 다시 정리돼요.</p>
+            <div className="mt-2 inline-flex rounded-full bg-surface-2 p-1" role="radiogroup" aria-label="사진 컷 속도">
+              {PACES.map((pace) => (
+                <button
+                  key={pace.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={style.cutPace === pace.id}
+                  onClick={() => {
+                    setStyle({ cutPace: pace.id });
+                    if (style.template === "review" && scenes.length) {
+                      editor.change("scenes", (list) => refitReviewShots(list, project.assets, CUT_PACES[pace.id]));
+                    }
+                  }}
+                  className={cx(
+                    "rounded-full px-4 py-1.5 text-sm font-bold transition",
+                    style.cutPace === pace.id ? "bg-surface text-fg shadow-sm" : "text-muted hover:text-fg",
+                  )}
+                >
+                  {pace.label} <span className="tabular text-xs font-semibold text-muted">{CUT_PACES[pace.id]}초</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </Card>
 
       <Card>

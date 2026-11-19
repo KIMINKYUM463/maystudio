@@ -7,7 +7,7 @@ import { fade } from "@remotion/transitions/fade";
 import { slide } from "@remotion/transitions/slide";
 import { wipe } from "@remotion/transitions/wipe";
 import React, { useEffect, useState } from "react";
-import { AbsoluteFill, Audio, Img, Series, useDelayRender } from "remotion";
+import { AbsoluteFill, Img, Sequence, Series, useDelayRender } from "remotion";
 import {
   carouselSlides,
   TRANSITION_FRAMES,
@@ -25,6 +25,7 @@ import {
   SAFE_TOP,
 } from "./components";
 import { COVERS } from "./covers";
+import { MotionLayer, MusicLayer, SoundEffects } from "./motion";
 import { ensureFonts } from "./fonts";
 import { SceneView } from "./SceneView";
 import { FONT, THEMES, type Theme } from "./theme";
@@ -58,13 +59,8 @@ const Blank: React.FC = () => (
   <AbsoluteFill style={{ backgroundColor: "#000" }} />
 );
 
-export const TravelShort: React.FC<VideoProps> = ({
-  scenes,
-  style,
-  product,
-  bgmSrc,
-  logoSrc,
-}) => {
+export const TravelShort: React.FC<VideoProps> = (props) => {
+  const { scenes, style, product, bgmSrc, logoSrc } = props;
   const fontsReady = useFonts();
   const theme = THEMES[style.template];
   if (!fontsReady) return <Blank />;
@@ -110,8 +106,15 @@ export const TravelShort: React.FC<VideoProps> = ({
           ))}
         </TransitionSeries>
       )}
-      {bgmSrc ? <Audio src={bgmSrc} volume={style.bgmVolume} loop /> : null}
+      <MusicLayer style={style} bgmSrc={bgmSrc} scenes={scenes} />
+      <SoundEffects style={style} scenes={scenes} />
+      <MotionLayer style={style} scenes={scenes} product={product} />
       <Overlay style={style} theme={theme} logoSrc={logoSrc} />
+      {style.coverInVideo ? (
+        <Sequence durationInFrames={1}>
+          <Thumbnail {...props} />
+        </Sequence>
+      ) : null}
     </AbsoluteFill>
   );
 };

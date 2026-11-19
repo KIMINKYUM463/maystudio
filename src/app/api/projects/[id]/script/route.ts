@@ -1,6 +1,6 @@
 import { buildCopy, hookLineFor } from "@/lib/script/copy";
 import { applyTextOverrides } from "@/lib/script/generator";
-import { refitReviewShots, scriptFor } from "@/lib/script/review";
+import { refitReviewShots, scriptFor, shotSecFor } from "@/lib/script/review";
 import { readJsonBody, route } from "@/lib/server/http";
 import { hasLlm, rewriteWithLlm } from "@/lib/server/llm";
 import { getProject, getSettings, nextLinkNumber, saveProject } from "@/lib/server/store";
@@ -37,7 +37,7 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
       const result = await rewriteWithLlm(project, scenes, settings);
       scenes = applyTextOverrides(scenes, result.overrides);
       if (project.style.template === "review") {
-        scenes = refitReviewShots(scenes, project.assets);
+        scenes = refitReviewShots(scenes, project.assets, shotSecFor(project.style));
       }
       aiHashtags = result.hashtags;
       source = "ai";

@@ -332,6 +332,32 @@ export function VideoEditorDialog({
                           );
                         })}
                       </div>
+                      <label className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-line bg-surface-2 px-4 py-3">
+                        <span>
+                          <span className="block text-sm font-bold">영상 맨 앞(0.03초)에 커버 넣기</span>
+                          <span className="block text-xs text-muted">
+                            켜면 영상 첫 프레임이 이 커버가 돼요. 인스타가 자동으로 고르는 커버도 이 디자인이 돼요.
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={project.style.coverInVideo}
+                          onClick={() => editor.change("style", (s) => ({ ...s, coverInVideo: !s.coverInVideo }))}
+                          className={cx(
+                            "relative h-7 w-12 shrink-0 rounded-full transition",
+                            project.style.coverInVideo ? "bg-accent" : "bg-surface-3",
+                          )}
+                        >
+                          <span
+                            className={cx(
+                              "absolute top-1 size-5 rounded-full bg-white shadow transition-all",
+                              project.style.coverInVideo ? "left-6" : "left-1",
+                            )}
+                          />
+                          <span className="sr-only">{project.style.coverInVideo ? "켜짐" : "꺼짐"}</span>
+                        </button>
+                      </label>
                       <p className="mt-6 text-sm font-bold">커버 문구</p>
                       <p className="mt-1 text-xs text-muted">2줄, 숫자·가격이 앞에 오면 프로필 격자에서 잘 보여요.</p>
                       {scenes[0] ? (

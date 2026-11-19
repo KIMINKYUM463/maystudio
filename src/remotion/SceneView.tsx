@@ -191,7 +191,16 @@ const SubtitleScene: React.FC<SceneProps> = ({ scene, theme, style }) => {
   );
   if (!theme.subtitles) return null;
   const look = bold ? BOLD_SUBTITLES : { ...theme.subtitles, stroke: 0 };
-  return <Subtitles chunks={chunks} font={look.font} size={look.size} centerY={look.centerY} stroke={look.stroke} />;
+  return (
+    <Subtitles
+      chunks={chunks}
+      font={look.font}
+      size={look.size}
+      centerY={look.centerY}
+      stroke={look.stroke}
+      accent={style.motion ? style.accentColor : undefined}
+    />
+  );
 };
 
 /**

@@ -316,3 +316,16 @@ describe("refitReviewShots matching", () => {
       expect(waterIds.has(firstWater.extraAssetIds[0])).toBe(true);
   });
 });
+
+describe("cut pace", () => {
+  it("slower pace means fewer, longer photo cuts", async () => {
+    const { refitReviewShots, shotSecFor } = await import("@/lib/script/review");
+    const project = reviewProject({ assets: Array.from({ length: 30 }, (_, i) => asset(`p${i}`, "")) });
+    const scenes = generateReviewScript(project, 1).scenes;
+    const cuts = (sec: number) => refitReviewShots(scenes, project.assets, sec).reduce((n, s) => n + 1 + s.extraAssetIds.length, 0);
+    expect(shotSecFor({ cutPace: "fast" })).toBe(1.1);
+    expect(shotSecFor(undefined)).toBe(1.8);
+    expect(cuts(shotSecFor({ cutPace: "slow" }))).toBeLessThan(cuts(shotSecFor({ cutPace: "normal" })));
+    expect(cuts(shotSecFor({ cutPace: "normal" }))).toBeLessThan(cuts(shotSecFor({ cutPace: "fast" })));
+  });
+});
