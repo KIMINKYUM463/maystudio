@@ -27,10 +27,13 @@ if errorlevel 1 (
 )
 
 start "MayAIStudio 서버" cmd /k npm run start -- -p 3000
+rem cloudflared: installed copy, or the no-install copy in %LOCALAPPDATA%\cloudflared
+set "CF=cloudflared"
 where cloudflared >nul 2>&1
-if errorlevel 1 (
-  echo cloudflared가 설치돼 있지 않아 인터넷 연결은 건너뛰어요. 이 컴퓨터에서는 http://localhost:3000 으로 쓸 수 있어요.
+if errorlevel 1 set "CF=%LOCALAPPDATA%\cloudflared\cloudflared.exe"
+if exist "%USERPROFILE%\.cloudflared\cert.pem" (
+  start "MayAIStudio 인터넷 연결" cmd /k ""!CF!" tunnel run mayaistudio"
 ) else (
-  start "MayAIStudio 인터넷 연결" cmd /k cloudflared tunnel run mayaistudio
+  echo 인터넷 연결이 아직 설정되지 않았어요. 이 컴퓨터에서는 http://localhost:3000 으로 쓸 수 있어요.
 )
 start "" http://localhost:3000
