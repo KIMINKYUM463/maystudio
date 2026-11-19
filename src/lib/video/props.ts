@@ -1,4 +1,5 @@
 import { THEMES } from "../../remotion/theme";
+import { quoteFromNotes } from "../review-quote";
 import type { CameraMove, Product, Project, Scene, SceneKind, Style, TemplateId } from "../types";
 
 export const FPS = 30;
@@ -35,8 +36,8 @@ export type VideoScene = {
 
 export type VideoProduct = Pick<
   Product,
-  "name" | "region" | "priceText" | "originalPriceText" | "rating" | "features"
->;
+  "name" | "region" | "priceText" | "originalPriceText" | "rating" | "features" | "platform"
+> & { reviewQuote: string };
 
 export type VideoProps = {
   scenes: VideoScene[];
@@ -85,11 +86,12 @@ export function buildVideoProps(project: Project, resolveFile: (file: string) =>
       audioSrc: useAudio && scene.audioFile ? resolveFile(scene.audioFile) : null,
     };
   });
-  const { name, region, priceText, originalPriceText, rating, features } = project.product;
+  const { name, region, priceText, originalPriceText, rating, features, platform } = project.product;
+  const reviewQuote = project.product.reviewQuote.trim() || quoteFromNotes(project.product.notes);
   return {
     scenes,
     style: project.style,
-    product: { name, region, priceText, originalPriceText, rating, features },
+    product: { name, region, priceText, originalPriceText, rating, features, platform, reviewQuote },
     bgmSrc: project.style.bgmFile ? resolveFile(project.style.bgmFile) : null,
     logoSrc: project.style.logoFile ? resolveFile(project.style.logoFile) : null,
     photos: project.assets.map((a) => resolveFile(a.file)),

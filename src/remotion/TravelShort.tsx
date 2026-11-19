@@ -25,7 +25,7 @@ import {
   SAFE_TOP,
 } from "./components";
 import { COVERS } from "./covers";
-import { MotionLayer, MusicLayer, SoundEffects } from "./motion";
+import { MotionLayer, MusicLayer, ReviewQuoteLayer, SoundEffects } from "./motion";
 import { ensureFonts } from "./fonts";
 import { SceneView } from "./SceneView";
 import { FONT, themeFor, type Theme } from "./theme";
@@ -109,6 +109,7 @@ export const TravelShort: React.FC<VideoProps> = (props) => {
       <MusicLayer style={style} bgmSrc={bgmSrc} scenes={scenes} />
       <SoundEffects style={style} scenes={scenes} />
       <MotionLayer style={style} scenes={scenes} product={product} />
+      <ReviewQuoteLayer style={style} scenes={scenes} product={product} />
       <Overlay style={style} theme={theme} logoSrc={logoSrc} />
       {style.coverInVideo ? (
         <Sequence durationInFrames={1}>

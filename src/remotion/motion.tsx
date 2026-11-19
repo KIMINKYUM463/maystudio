@@ -163,3 +163,75 @@ export const MotionLayer: React.FC<{ style: Style; scenes: VideoScene[]; product
     </AbsoluteFill>
   );
 };
+
+const PLATFORM_NAMES: Partial<Record<VideoProduct["platform"], string>> = {
+  coupang: "쿠팡",
+  yeogi: "여기어때",
+  agoda: "아고다",
+  booking: "부킹닷컴",
+  myrealtrip: "마이리얼트립",
+  tripcom: "트립닷컴",
+  klook: "클룩",
+};
+
+/** "⭐ 실제 후기" card: a real guest's line, quoted verbatim, below the subtitles (y ≈ 1120~1450). */
+const ReviewCard: React.FC<{ quote: string; source: string; accent: string; duration: number }> = ({ quote, source, accent, duration }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const enter = spring({ frame: frame - 4, fps, config: { damping: 15, stiffness: 150 } });
+  const exit = interpolate(frame, [duration - 8, duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const shown = Math.max(0, enter - exit);
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 70,
+        right: 70,
+        top: 1120,
+        opacity: shown,
+        transform: `translateY(${(1 - shown) * 60}px) scale(${0.94 + shown * 0.06})`,
+        padding: "34px 40px 30px",
+        borderRadius: 34,
+        background: "rgba(255,255,255,0.96)",
+        boxShadow: "0 24px 60px rgba(0,0,0,0.35)",
+        fontFamily: FONT.sans,
+        color: "#0f172a",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 30, fontWeight: 800 }}>
+        <span style={{ color: accent, letterSpacing: 2 }}>★★★★★</span>
+        <span style={{ color: "#5b6474" }}>실제 이용 후기{source ? ` · ${source}` : ""}</span>
+      </div>
+      <div style={{ marginTop: 16, fontSize: 46, fontWeight: 800, lineHeight: 1.32, letterSpacing: "-0.02em", wordBreak: "keep-all" }}>
+        “{quote}”
+      </div>
+      {/* speech-bubble tail */}
+      <div
+        style={{
+          position: "absolute",
+          left: 80,
+          bottom: -18,
+          width: 36,
+          height: 36,
+          background: "rgba(255,255,255,0.96)",
+          transform: "rotate(45deg)",
+          borderRadius: 6,
+        }}
+      />
+    </div>
+  );
+};
+
+/** Shown on the second scene (the line that proves the hook), when the project has a review line. */
+export const ReviewQuoteLayer: React.FC<{ style: Style; scenes: VideoScene[]; product: VideoProduct }> = ({ style, scenes, product }) => {
+  const quote = product.reviewQuote.trim();
+  if (!style.reviewCard || !quote || scenes.length < 2) return null;
+  const starts = sceneStarts(scenes, style);
+  const index = 1;
+  const duration = scenes[index].durationInFrames;
+  return (
+    <Sequence from={starts[index]} durationInFrames={duration}>
+      <ReviewCard quote={quote} source={PLATFORM_NAMES[product.platform] ?? ""} accent={style.accentColor} duration={duration} />
+    </Sequence>
+  );
+};

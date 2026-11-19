@@ -146,6 +146,8 @@ export const productSchema = z.object({
   occasion: z.string().max(30).default(""),
   /** Script material from reviews and FAQs; only the AI rewrite reads it. */
   notes: z.string().max(2000).default(""),
+  /** One real-review line shown as a "⭐ 실제 후기" card; empty = taken from the best review in notes. */
+  reviewQuote: z.string().max(80).default(""),
   /** Only a stay the creator really visited may be written as a first-person review ("좋더라구요"). */
   visited: z.boolean().default(false),
   affiliateUrl: z.string().max(2000).default(""),
@@ -213,6 +215,8 @@ export const styleSchema = z.object({
   animatePhotos: z.boolean().default(false),
   /** Script generation adds 1~2 free scenery shots (CC0/BY/BY-SA) that fit the lines, credited in the caption. */
   autoScenery: z.boolean().default(true),
+  /** Shows the real-review card (needs a review line). */
+  reviewCard: z.boolean().default(true),
   captionPosition: z.enum(CAPTION_POSITIONS).default("bottom"),
   subtitleStyle: z.enum(SUBTITLE_STYLES).default("serif"),
   accentColor: z

@@ -1,3 +1,4 @@
+import { quoteFromReview } from "./review-quote";
 import { load } from "cheerio";
 import type { Platform, Product } from "./types";
 
@@ -264,9 +265,11 @@ export function parseCoupangTravel(data: CoupangData, pageUrl: string): ImportRe
     .join("\n")
     .slice(0, 2000);
   const rating = p.productReview?.ratingCount ? p.productReview.ratingAverage : undefined;
+  const reviewQuote = quoteFromReview(review?.title, review?.content);
 
   return {
     product: {
+      ...(reviewQuote ? { reviewQuote } : {}),
       // "소노벨 변산 (구 대명리조트 변산/…)" → "소노벨 변산"
       name: p.productName.replace(/\s*[([].*?[)\]]\s*/g, " ").trim().slice(0, 80),
       category: "stay",

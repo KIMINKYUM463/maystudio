@@ -26,6 +26,8 @@ const demoProps: VideoProps = {
     originalPriceText: "129,000원",
     rating: "4.8",
     features: ["통창 오션뷰", "개별 바베큐", "스파 욕조"],
+    platform: "coupang",
+    reviewQuote: "아이들이 온수풀에서 안 나오려고 했어요",
   },
   bgmSrc: null,
   logoSrc: null,

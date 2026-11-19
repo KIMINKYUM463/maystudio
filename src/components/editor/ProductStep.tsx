@@ -8,6 +8,7 @@ import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
 import { videoPoster } from "@/lib/client/video-poster";
 import { planMediaUpload } from "@/lib/media-pair";
 import { animateTargets, type PhotoGroup } from "@/lib/photo-groups";
+import { quoteFromNotes } from "@/lib/review-quote";
 import { CLIP_COST_USD, DEFAULT_REPLICATE_MODEL, KRW_PER_USD } from "@/lib/replicate-models";
 import { replicateReady, visionReady } from "@/lib/settings-view";
 import { CATEGORIES, MAX_ASSETS, type Category, type Product, type Project } from "@/lib/types";
@@ -359,6 +360,37 @@ export function ProductStep({ project, editor, settings }: StepProps) {
               value={product.notes}
               onChange={(e) => setProduct({ notes: e.target.value })}
             />
+          </Field>
+          <Field
+            label="영상에 넣을 실제 후기 한 줄"
+            hint={
+              <>
+                두 번째 장면에 &lsquo;⭐ 실제 이용 후기&rsquo; 말풍선으로 나와요. 실제 후기 문장을 바꾸지 말고 그대로 넣어 주세요.
+                비워두면 가져온 베스트 리뷰의 첫 문장을 써요.
+              </>
+            }
+            htmlFor="reviewQuote"
+            className="sm:col-span-2"
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                id="reviewQuote"
+                maxLength={80}
+                className={inputClass}
+                placeholder={quoteFromNotes(product.notes) || "예: 아이들이 온수풀에서 안 나오려고 했어요"}
+                value={product.reviewQuote}
+                onChange={(e) => setProduct({ reviewQuote: e.target.value })}
+              />
+              <label className="flex shrink-0 items-center gap-2 text-xs font-semibold">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[var(--color-accent)]"
+                  checked={project.style.reviewCard}
+                  onChange={(e) => editor.change("style", (s) => ({ ...s, reviewCard: e.target.checked }))}
+                />
+                영상에 후기 말풍선 넣기
+              </label>
+            </div>
           </Field>
           <label className="flex cursor-pointer items-start gap-3 sm:col-span-2">
             <input
