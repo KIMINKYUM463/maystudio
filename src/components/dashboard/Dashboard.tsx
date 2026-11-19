@@ -78,7 +78,12 @@ export function Dashboard() {
   const latestReel = [...(projects ?? [])]
     .filter((p) => p.render.status === "done" && p.render.outputFile)
     .sort((a, b) => (b.render.finishedAt ?? "").localeCompare(a.render.finishedAt ?? ""))[0];
-  const heroVideo = latestReel ? projectFileUrl(latestReel.id, latestReel.render.outputFile!, latestReel.render.finishedAt) : null;
+  // Before the first finished reel (or on a host with no projects) the phone plays the bundled sample reel.
+  const heroVideo = latestReel
+    ? projectFileUrl(latestReel.id, latestReel.render.outputFile!, latestReel.render.finishedAt)
+    : projects
+      ? "/showcase/reel.mp4"
+      : null;
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-10">
