@@ -10,7 +10,8 @@ import { Button, Spinner, cx } from "@/components/ui";
 import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
 import { animateTargets, isGenericLabel } from "@/lib/photo-groups";
 import { llmReady, replicateReady, ttsReady, visionReady, type MaskedSettings } from "@/lib/settings-view";
-import type { Project } from "@/lib/types";
+import { CAMERA_MOVES, type Project } from "@/lib/types";
+import { shotSecFor } from "@/lib/script/review";
 import { buildVideoProps, formatDuration, videoDurationInFrames } from "@/lib/video/props";
 import { ProductStep } from "./ProductStep";
 import { StayPicker } from "./StayPicker";
@@ -217,6 +218,23 @@ export function Editor({ id }: { id: string }) {
     () => (deferred ? buildVideoProps(deferred, (file) => projectFileUrl(id, file)) : null),
     [deferred, id],
   );
+  // Before a script exists the phone still plays something: every photo/clip in order at the cut pace.
+  const previewProps = useMemo(() => {
+    if (!deferred || !videoProps || deferred.scenes.length || !deferred.assets.length) return videoProps;
+    const sec = shotSecFor(deferred.style);
+    const scenes = deferred.assets.map((asset, i) => ({
+      id: `photo-${asset.id}`,
+      kind: i === 0 ? ("hook" as const) : ("feature" as const),
+      assetId: asset.id,
+      extraAssetIds: [],
+      caption: "",
+      subCaption: "",
+      narration: "",
+      camera: CAMERA_MOVES[i % CAMERA_MOVES.length],
+      durationSec: asset.videoFile ? Math.max(sec, 3) : sec,
+    }));
+    return buildVideoProps({ ...deferred, scenes }, (file) => projectFileUrl(id, file));
+  }, [deferred, videoProps, id]);
 
   if (loadError) {
     return (
@@ -360,16 +378,20 @@ export function Editor({ id }: { id: string }) {
           <div className="mx-auto flex max-w-[320px] items-baseline justify-between px-1">
             <span className="text-sm font-bold text-fg">실시간 미리보기</span>
             <span className="tabular text-xs font-semibold text-muted">
-              {videoProps.scenes.length}장면 · {seconds}
+              {videoProps.scenes.length
+                ? `${videoProps.scenes.length}장면 · ${seconds}`
+                : previewProps?.scenes.length
+                  ? `사진 ${previewProps.scenes.length}장 미리보기`
+                  : `0장면 · ${seconds}`}
             </span>
           </div>
           <PhoneFrame>
-            {videoProps.scenes.length ? (
-              <PreviewPlayer props={videoProps} />
+            {previewProps?.scenes.length ? (
+              <PreviewPlayer props={previewProps} />
             ) : (
               <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-3 bg-surface-2 p-8 text-center text-sm text-muted">
                 <FilmIcon />
-                대본을 만들면 여기서 영상을 바로 볼 수 있어요.
+                사진을 가져오면 여기서 순서대로 바로 보여드려요.
               </div>
             )}
           </PhoneFrame>
