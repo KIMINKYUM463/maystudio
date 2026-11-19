@@ -14,13 +14,15 @@ const PROMPT = `너는 숙소 릴스 편집자다. 아래 사진들은 한 숙�
 - score: 1~5. 릴스 첫 화면에 나왔을 때 스크롤을 멈추게 할 정도. 선명하고 화려하고 사람이 가고 싶어지면 5, 흐리거나 평범하면 1.
 사진에 없는 것을 지어내지 마라. 반드시 다음 JSON만 출력: {"photos":[{"index":0,"label":"...","group":"water","score":4}]}`;
 
-type Photo = { index: number; mime: string; data: string };
+export type Photo = { index: number; mime: string; data: string };
 
 const MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
 
-async function loadPhotos(project: Project): Promise<Photo[]> {
+/** Photos as inline images, indexed by their position in project.assets; `only` limits to some asset ids. */
+export async function loadPhotos(project: Project, only?: Set<string>): Promise<Photo[]> {
   const photos: Photo[] = [];
   for (const [index, asset] of project.assets.entries()) {
+    if (only && !only.has(asset.id)) continue;
     const mime = MIME[asset.file.split(".").pop()?.toLowerCase() ?? ""];
     if (!mime) continue;
     const buffer = await fs.readFile(projectFilePath(project.id, asset.file)).catch(() => null);
@@ -41,12 +43,12 @@ async function postJson(url: string, body: unknown, headers: Record<string, stri
   return res.json();
 }
 
-async function askGemini(settings: Settings, photos: Photo[]): Promise<string> {
+async function askGemini(settings: Settings, photos: Photo[], prompt: string): Promise<string> {
   const parts = photos.flatMap((p) => [{ text: `index ${p.index}` }, { inlineData: { mimeType: p.mime, data: p.data } }]);
   const data = (await postJson(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(settings.geminiModel)}:generateContent`,
     {
-      contents: [{ role: "user", parts: [{ text: PROMPT }, ...parts] }],
+      contents: [{ role: "user", parts: [{ text: prompt }, ...parts] }],
       generationConfig: { responseMimeType: "application/json" },
     },
     { "x-goog-api-key": settings.geminiKey },
@@ -54,9 +56,9 @@ async function askGemini(settings: Settings, photos: Photo[]): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
 }
 
-async function askOpenAi(settings: Settings, photos: Photo[]): Promise<string> {
+async function askOpenAi(settings: Settings, photos: Photo[], prompt: string): Promise<string> {
   const content = [
-    { type: "text", text: PROMPT },
+    { type: "text", text: prompt },
     ...photos.flatMap((p) => [
       { type: "text", text: `index ${p.index}` },
       { type: "image_url", image_url: { url: `data:${p.mime};base64,${p.data}`, detail: "low" } },
@@ -75,15 +77,19 @@ async function askOpenAi(settings: Settings, photos: Photo[]): Promise<string> {
   return data.choices?.[0]?.message?.content ?? "";
 }
 
+/** Gemini first (cheap, many images per call), OpenAI as the fallback. */
+export function askVision(settings: Settings, photos: Photo[], prompt: string): Promise<string> {
+  return settings.geminiKey ? askGemini(settings, photos, prompt) : askOpenAi(settings, photos, prompt);
+}
+
 export function visionReady(settings: Settings): boolean {
   return Boolean(settings.geminiKey || settings.openaiKey);
 }
 
-/** Gemini first (cheap, many images per call), OpenAI as the fallback. */
 export async function classifyPhotos(project: Project, settings: Settings): Promise<PhotoClass[]> {
   if (!visionReady(settings)) throw new Error("사진 분류에는 Gemini 또는 OpenAI 키가 필요해요. 설정에서 넣어주세요.");
   const photos = await loadPhotos(project);
   if (photos.length === 0) throw new Error("분류할 사진이 없어요.");
-  const text = settings.geminiKey ? await askGemini(settings, photos) : await askOpenAi(settings, photos);
+  const text = await askVision(settings, photos, PROMPT);
   return classificationSchema.parse(extractJson(text)).photos;
 }

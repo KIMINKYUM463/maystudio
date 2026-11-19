@@ -148,6 +148,14 @@ export function Editor({ id }: { id: string }) {
       const classify = project.assets.length > 1 && project.assets.every((a) => isGenericLabel(a.label)) && visionReady(settings);
       if (!classify) skip("classify");
       let assets = project.assets;
+      // Photos nobody checked for people yet (uploaded, or imported before this existed): mosaic faces first.
+      if (assets.some((a) => !a.faceChecked)) {
+        try {
+          ({ assets } = (await editor.run(() => api<{ project: Project }>(`/api/projects/${id}/assets/faces`, { method: "POST", json: {} }))).project);
+        } catch (error) {
+          toast.error(`인물 모자이크는 건너뛰고 진행해요. (${errorMessage(error)})`);
+        }
+      }
       if (classify) {
         try {
           ({ assets } = (await editor.run(() => api<{ project: Project }>(`/api/projects/${id}/assets/classify`, { method: "POST" }))).project);

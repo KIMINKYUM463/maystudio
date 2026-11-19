@@ -59,7 +59,7 @@ export const DELETE = route(async (request: Request, { params }: Ctx) => {
   const project = await getProject(id);
   const asset = project.assets.find((a) => a.id === assetId);
   if (!asset) throw new BadRequestError("사진을 찾을 수 없습니다.");
-  await Promise.all([deleteProjectFile(id, asset.file), deleteProjectFile(id, asset.videoFile)]);
+  await Promise.all([deleteProjectFile(id, asset.file), deleteProjectFile(id, asset.videoFile), deleteProjectFile(id, asset.originalFile)]);
   const updated = await updateProject(id, (p) => ({
     ...p,
     assets: p.assets.filter((a) => a.id !== assetId),

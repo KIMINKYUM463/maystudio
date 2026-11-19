@@ -1,4 +1,5 @@
 import { BadRequestError, readJsonBody, route } from "@/lib/server/http";
+import { blurNewFaces } from "@/lib/server/face-blur";
 import { downloadImages, fetchProductPage } from "@/lib/server/importer";
 import { getProject, updateProject } from "@/lib/server/store";
 import { MAX_ASSETS } from "@/lib/types";
@@ -34,12 +35,21 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
       return value && (!current || (Array.isArray(current) && current.length === 0) || key === "sourceUrl" || key === "platform");
     }),
   );
-  const updated = await updateProject(id, (p) => ({
+  let updated = await updateProject(id, (p) => ({
     ...p,
     title: p.title === "새 여행 숏폼" && result.product.name ? result.product.name : p.title,
     product: { ...p.product, ...filled },
     assets: [...p.assets, ...assets],
   }));
+  // Listing photos often show models: mosaic their faces right away (needs a Gemini/OpenAI key; never blocks the import).
+  let blurred = 0;
+  if (assets.length) {
+    try {
+      ({ project: updated, blurred } = await blurNewFaces(id));
+    } catch (error) {
+      console.error("[faces]", error);
+    }
+  }
   const pageName = result.product.name ?? "";
   const typedName = project.product.name;
   return Response.json({
@@ -47,6 +57,7 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
     imported: {
       fields: Object.keys(filled),
       images: assets.length,
+      blurred,
       foundImages: result.images.length,
       // Set when the page is a different stay than the one already typed (e.g. a prefilled kit idea).
       otherName: pageName && typedName && !sameStayName(pageName, typedName) ? pageName : null,

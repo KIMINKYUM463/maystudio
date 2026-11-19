@@ -141,6 +141,10 @@ export const assetSchema = z.object({
   animateJobId: z.string().optional(),
   /** AI photo group (water/signature/room/other); "other" (cars, signs, lobbies) stays out of the reel when possible. */
   group: z.enum(["water", "signature", "room", "other"]).optional(),
+  /** Faces were looked for (and mosaicked if found); server-managed. */
+  faceChecked: z.boolean().optional(),
+  /** Untouched copy kept when faces were mosaicked, so the mosaic can be undone; server-managed. */
+  originalFile: z.string().optional(),
 });
 
 export const sceneSchema = z.object({

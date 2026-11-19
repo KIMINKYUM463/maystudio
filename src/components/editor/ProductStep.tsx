@@ -67,6 +67,8 @@ export function ProductStep({ project, editor, settings }: StepProps) {
   const [importing, setImporting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [batching, setBatching] = useState(false);
+  /** "all" while mosaicking, or the asset id being restored. */
+  const [facing, setFacing] = useState<string | null>(null);
   const [classifying, setClassifying] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -82,11 +84,13 @@ export function ProductStep({ project, editor, settings }: StepProps) {
       const { imported } = await editor.run(() =>
         api<{
           project: Project;
-          imported: { fields: string[]; images: number; foundImages: number; otherName: string | null };
+          imported: { fields: string[]; images: number; foundImages: number; otherName: string | null; blurred?: number };
         }>(`/api/projects/${project.id}/import`, { method: "POST", json: { url: url.trim(), withImages } }),
       );
       const filled = imported.fields.filter((f) => f !== "sourceUrl" && f !== "platform").length;
-      toast.success(`정보 ${filled}개, 사진 ${imported.images}장을 가져왔어요.`);
+      toast.success(
+        `정보 ${filled}개, 사진 ${imported.images}장을 가져왔어요.${imported.blurred ? ` 사람이 나온 사진 ${imported.blurred}장은 얼굴을 모자이크했어요.` : ""}`,
+      );
       if (imported.otherName) {
         toast.error(
           `링크의 숙소(${imported.otherName})가 입력된 숙소(${product.name})와 달라요. 이미 입력된 칸은 그대로 두었으니 이름·지역·특징을 확인해 주세요.`,
@@ -217,6 +221,24 @@ export function ProductStep({ project, editor, settings }: StepProps) {
       toast.error(errorMessage(error));
     } finally {
       setClassifying(false);
+    }
+  }
+
+  async function blurFaces(restore?: string) {
+    setFacing(restore ?? "all");
+    try {
+      const { blurred } = await editor.run(() =>
+        api<{ project: Project; blurred: number }>(`/api/projects/${project.id}/assets/faces`, {
+          method: "POST",
+          json: restore ? { restore } : {},
+        }),
+      );
+      if (restore) toast.success("원본 사진으로 되돌렸어요.");
+      else toast.success(blurred ? `사람이 나온 사진 ${blurred}장의 얼굴을 모자이크했어요.` : "새로 모자이크할 얼굴이 없어요.");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setFacing(null);
     }
   }
 
@@ -366,6 +388,17 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                   AI로 사진 분류·정렬
                 </Button>
               ) : null}
+              {assets.length > 0 ? (
+                <Button
+                  size="sm"
+                  onClick={() => void blurFaces()}
+                  loading={facing === "all"}
+                  disabled={uploading || batching || facing !== null || assets.every((a) => a.faceChecked)}
+                  title={assets.every((a) => a.faceChecked) ? "모든 사진을 이미 확인했어요" : "사람 얼굴을 찾아 모자이크해요. 원본은 따로 보관돼요."}
+                >
+                  인물 모자이크
+                </Button>
+              ) : null}
               <label
                 className={cx(
                   "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold",
@@ -451,6 +484,10 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                       <span className="absolute top-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
                         영상
                       </span>
+                    ) : asset.originalFile ? (
+                      <span className="absolute top-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        모자이크
+                      </span>
                     ) : null}
                   </div>
                   <div className="flex flex-col gap-2 p-2">
@@ -483,6 +520,16 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                         삭제
                       </Button>
                     </div>
+                    {asset.originalFile ? (
+                      <button
+                        type="button"
+                        onClick={() => void blurFaces(asset.id)}
+                        disabled={facing !== null}
+                        className="self-end text-xs text-muted underline-offset-2 hover:text-fg hover:underline disabled:opacity-50"
+                      >
+                        {facing === asset.id ? "되돌리는 중…" : "모자이크 취소"}
+                      </button>
+                    ) : null}
                     <AssetVideoClip
                       projectId={project.id}
                       asset={asset}
