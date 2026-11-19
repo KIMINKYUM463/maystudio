@@ -174,6 +174,8 @@ export const assetSchema = z.object({
   faceChecked: z.boolean().optional(),
   /** Untouched copy kept when faces were mosaicked, so the mosaic can be undone; server-managed. */
   originalFile: z.string().optional(),
+  /** A guest's photo from the listing's best review (not the stay's official photo). */
+  fromReview: z.boolean().optional(),
   /** Free scenery added to match the script (Openverse); replaced when the script is regenerated. */
   scenery: z.boolean().optional(),
   /** Author and licence for CC photos; printed in the caption. */

@@ -66,6 +66,7 @@ const MEDIA_ACCEPT = `image/jpeg,image/png,image/webp,${VIDEO_ACCEPT}`;
 export function ProductStep({ project, editor, settings }: StepProps) {
   const [url, setUrl] = useState(project.product.sourceUrl);
   const [withImages, setWithImages] = useState(true);
+  const [withReviewPhotos, setWithReviewPhotos] = useState(true);
   const [importing, setImporting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [batching, setBatching] = useState(false);
@@ -88,12 +89,12 @@ export function ProductStep({ project, editor, settings }: StepProps) {
       const { imported } = await editor.run(() =>
         api<{
           project: Project;
-          imported: { fields: string[]; images: number; foundImages: number; otherName: string | null; blurred?: number };
-        }>(`/api/projects/${project.id}/import`, { method: "POST", json: { url: url.trim(), withImages } }),
+          imported: { fields: string[]; images: number; foundImages: number; otherName: string | null; blurred?: number; reviewImages?: number };
+        }>(`/api/projects/${project.id}/import`, { method: "POST", json: { url: url.trim(), withImages, withReviewPhotos } }),
       );
       const filled = imported.fields.filter((f) => f !== "sourceUrl" && f !== "platform").length;
       toast.success(
-        `정보 ${filled}개, 사진 ${imported.images}장을 가져왔어요.${imported.blurred ? ` 사람이 나온 사진 ${imported.blurred}장은 얼굴을 모자이크했어요.` : ""}`,
+        `정보 ${filled}개, 사진 ${imported.images}장을 가져왔어요.${imported.reviewImages ? ` (후기 사진 ${imported.reviewImages}장 포함)` : ""}${imported.blurred ? ` 사람이 나온 사진 ${imported.blurred}장은 얼굴을 모자이크했어요.` : ""}`,
       );
       if (imported.otherName) {
         toast.error(
@@ -294,8 +295,18 @@ export function ProductStep({ project, editor, settings }: StepProps) {
           <input type="checkbox" checked={withImages} onChange={(e) => setWithImages(e.target.checked)} />
           사진도 함께 가져오기 (남은 칸만큼, 최대 {MAX_ASSETS}장)
         </label>
+        <label className="mt-2 flex items-center gap-2 text-sm text-muted">
+          <input
+            type="checkbox"
+            checked={withReviewPhotos}
+            disabled={!withImages}
+            onChange={(e) => setWithReviewPhotos(e.target.checked)}
+          />
+          베스트 후기의 손님 사진도 가져오기 (쿠팡)
+        </label>
         <p className="mt-2 text-xs text-faint">
-          가져온 사진의 저작권은 판매처에 있어요. 제휴 홍보 목적 사용이 허용되는지 각 플랫폼 정책을 확인하세요.
+          가져온 사진의 저작권은 판매처에 있어요. 제휴 홍보 목적 사용이 허용되는지 각 플랫폼 정책을 확인하세요. 후기 사진은
+          손님이 찍은 사진이라 저작권이 작성자에게 있어요. 쓰기 전에 꼭 확인하고, 사진을 사실과 다르게 바꾸지 마세요.
         </p>
       </Card>
 
@@ -586,6 +597,10 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                     {asset.videoFile ? (
                       <span className="absolute top-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
                         영상
+                      </span>
+                    ) : asset.fromReview ? (
+                      <span className="absolute top-2 right-2 rounded-md bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        후기{asset.originalFile ? " · 모자이크" : ""}
                       </span>
                     ) : asset.originalFile ? (
                       <span className="absolute top-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">

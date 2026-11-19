@@ -7,6 +7,8 @@ export type ImportedImage = { url: string; label: string };
 export type ImportResult = {
   product: Partial<Product>;
   images: ImportedImage[];
+  /** Photos guests attached to the listing's best review (Coupang embeds them in the page). */
+  reviewImages?: ImportedImage[];
 };
 
 const PLATFORM_HOSTS: Array<[RegExp, Platform]> = [
@@ -211,7 +213,10 @@ type CoupangData = {
     introductions?: Array<{ themes?: string[]; description?: string }>;
     imageGroups?: Array<{ type?: string; name?: string; images?: CoupangImage[] }>;
     representativeVendorItem?: { price?: Record<string, unknown> };
-    bestReview?: { reviewContent?: { title?: string; content?: string } };
+    bestReview?: {
+      reviewContent?: { title?: string; content?: string };
+      attachmentInfo?: { attachments?: Array<{ originPath?: string; attachmentType?: string; blinded?: boolean }> };
+    };
   };
 };
 
@@ -284,6 +289,13 @@ export function parseCoupangTravel(data: CoupangData, pageUrl: string): ImportRe
       platform: "coupang",
     },
     images: images.slice(0, MAX_COUPANG_IMAGES),
+    reviewImages: (p.bestReview?.attachmentInfo?.attachments ?? [])
+      .filter((a) => a.attachmentType === "IMAGE" && !a.blinded && a.originPath)
+      .slice(0, 6)
+      .flatMap((a) => {
+        const url = absolutize(a.originPath!, pageUrl);
+        return url ? [{ url, label: "후기 사진" }] : [];
+      }),
   };
 }
 

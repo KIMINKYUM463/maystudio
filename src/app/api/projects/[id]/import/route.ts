@@ -6,7 +6,12 @@ import { MAX_ASSETS } from "@/lib/types";
 import { z } from "zod";
 
 type Ctx = { params: Promise<{ id: string }> };
-const bodySchema = z.object({ url: z.string().min(1), withImages: z.boolean().default(true) });
+const bodySchema = z.object({
+  url: z.string().min(1),
+  withImages: z.boolean().default(true),
+  /** Also the best review's guest photos (Coupang). */
+  withReviewPhotos: z.boolean().default(true),
+});
 
 /** Listings name the same stay differently ("니지모리 스튜디오" vs "동두천 니지모리스튜디오 료칸"). */
 function sameStayName(a: string, b: string): boolean {
@@ -17,7 +22,7 @@ function sameStayName(a: string, b: string): boolean {
 
 export const POST = route(async (request: Request, { params }: Ctx) => {
   const { id } = await params;
-  const { url, withImages } = bodySchema.parse(await readJsonBody(request));
+  const { url, withImages, withReviewPhotos } = bodySchema.parse(await readJsonBody(request));
   const project = await getProject(id);
   let result;
   try {
@@ -26,7 +31,13 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
     throw new BadRequestError(error instanceof Error ? error.message : "페이지를 가져오지 못했습니다.");
   }
   const slots = Math.max(0, MAX_ASSETS - project.assets.length);
-  const assets = withImages ? await downloadImages(id, result.images, slots) : [];
+  // Review photos are few (≤6) and the point of asking for them, so their slots are kept first.
+  const reviewWanted = withImages && withReviewPhotos ? Math.min(result.reviewImages?.length ?? 0, slots) : 0;
+  const listing = withImages ? await downloadImages(id, result.images, slots - reviewWanted) : [];
+  const reviews = reviewWanted
+    ? (await downloadImages(id, result.reviewImages!, slots - listing.length)).map((a) => ({ ...a, fromReview: true }))
+    : [];
+  const assets = [...listing, ...reviews];
 
   // Only fill fields the user hasn't typed yet.
   const filled = Object.fromEntries(
@@ -57,6 +68,7 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
     imported: {
       fields: Object.keys(filled),
       images: assets.length,
+      reviewImages: reviews.length,
       blurred,
       foundImages: result.images.length,
       // Set when the page is a different stay than the one already typed (e.g. a prefilled kit idea).
