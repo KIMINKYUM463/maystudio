@@ -280,4 +280,39 @@ describe("refitReviewShots matching", () => {
     const kicker = refit.find((s) => s.id === "kicker");
     if (kicker) expect(kicker.assetId).toBe("skate");
   });
+
+  it("a line naming one facility wins it over a quick list, and filler cuts stay in the same group", async () => {
+    const { refitReviewShots } = await import("@/lib/script/review");
+    const g = (id: string, label: string, group: string) => ({ ...asset(id, label), group }) as ReturnType<typeof asset>;
+    const project = reviewProject({
+      assets: [
+        g("pool", "야외수영장", "water"),
+        g("spa", "노천탕", "water"),
+        g("jacuzzi", "자쿠지", "water"),
+        g("bbq", "바베큐장", "signature"),
+        g("out1", "외관", "exterior"),
+        g("out2", "전경", "exterior"),
+        g("tub", "실내 스파", "water"),
+      ],
+    });
+    const scenes = generateReviewScript(project, 1).scenes.map((s) =>
+      s.id === "extras"
+        ? { ...s, narration: "노천탕, 바베큐장도 있으니까 하루 종일 놀기 좋고" }
+        : s.id === "kicker"
+          ? { ...s, narration: "심지어 밤엔 바베큐장에서 불멍까지 할 수 있어요" }
+          : s,
+    );
+    const refit = refitReviewShots(scenes, project.assets);
+    const kicker = refit.find((s) => s.id === "kicker");
+    const extras = refit.find((s) => s.id === "extras");
+    if (kicker && extras) {
+      expect(kicker.assetId).toBe("bbq");
+      expect(extras.assetId).not.toBe("bbq");
+    }
+    const waterIds = new Set(["pool", "spa", "jacuzzi", "tub"]);
+    const firstWater = refit.find((s) => s.assetId && waterIds.has(s.assetId) && s.extraAssetIds.length);
+    // With a free water photo left, a water scene's next cut is water, not the exterior.
+    if (firstWater && refit.flatMap((s) => [s.assetId]).filter((id) => id && waterIds.has(id)).length < waterIds.size)
+      expect(waterIds.has(firstWater.extraAssetIds[0])).toBe(true);
+  });
 });

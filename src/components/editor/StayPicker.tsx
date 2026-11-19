@@ -160,8 +160,7 @@ export function StayPicker({ projectId, editor, onDone }: { projectId: string; e
         <div className="relative mt-5 overflow-hidden rounded-2xl border border-line">
           <iframe
             title="메이의 숙소여행지도"
-            src="/travel-map.html"
-            sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+            src="/travel-map.html?embed=1"
             className="block h-[min(78dvh,820px)] w-full border-0 bg-[#f4f6f7]"
           />
           <p className="border-t border-line bg-surface-2 px-4 py-2.5 text-xs text-muted">

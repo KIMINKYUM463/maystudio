@@ -141,8 +141,85 @@ li.h>button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:2
 .cpin button{font:inherit;font-size:13px;padding:5px 12px;border-radius:8px;border:0;background:var(--accent);color:var(--surface);cursor:pointer}
 .cpin .ok{color:var(--accent)} .cpin .bad{color:var(--hot)}
 </style>
+<style id="may-skin">
+/* MayAIStudio 스킨: 앱과 같은 색·글꼴·모서리·그림자 (원본 스타일 위에 덮어씀) */
+@font-face{font-family:"Pretendard";src:url(/fonts/PretendardVariable.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root,:root[data-theme]{
+  --bg:#f6f7f9;--surface:#fff;--line:#e3e8f0;--fg:#0f172a;--muted:#5b6474;
+  --accent:#2c5fd6;--accent-soft:#eaf0fd;--hot:#e0435f;--hot-soft:#fdecef;--chip:#f3f5f8;
+  --sans:"Pretendard",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:var(--sans);
+  --sea:#dfe8fb;--land:#ffffff;--landsh:#9db4ea;--paper:#fff;--ink:#0f172a;
+  --shadow:0 1px 2px rgb(16 24 40/.04),0 24px 48px -24px rgb(30 58 138/.2);
+  color-scheme:light}
+body{background:var(--bg);font-feature-settings:"tnum"}
+.wrap{max-width:1080px;padding-block:24px 64px}
+h1{font-family:NanumMyeongjo,"Nanum Myeongjo",serif;font-weight:800;letter-spacing:-.025em}
+.hand,.map .lab,.legend,.area,.toplist{font-family:var(--sans)!important}
+.mapside .hand{font-size:16px;font-weight:700}
+.legend,.toplist{font-size:13px}.toplist b{font-size:14px}.area{font-size:13px;font-weight:700;background:var(--accent)}
+.stats{gap:8px;margin-bottom:16px}
+.stats>*{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.stats b{color:var(--accent)}
+.tabs{gap:2px;padding:8px 0 0;margin-bottom:14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.tab{border:0;border-bottom:2px solid transparent;border-radius:0;margin-bottom:-1px;background:transparent;color:var(--muted);font-weight:700;font-size:14px;padding:8px 14px}.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{background:transparent;color:var(--fg);border-bottom-color:var(--accent)}
+.bar{background:var(--bg);border-bottom-color:var(--line)}
+input[type=search],select{border-radius:999px;padding:8px 16px;font-size:14px}
+input[type=search]:focus,select:focus{border-color:var(--accent);outline:none}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);font-weight:600;padding:5px 12px}
+.chip:hover{border-color:color-mix(in srgb,var(--accent) 40%,transparent);color:var(--fg)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ftog{font-weight:600}
+.map{border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow)}
+.map .st .ring{stroke:var(--accent)}
+.mapside{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+li.h,.hc{border-radius:16px;transition:border-color .15s,box-shadow .15s}
+li.h:hover,.hc:hover{border-color:color-mix(in srgb,var(--accent) 30%,transparent);box-shadow:var(--shadow)}
+.rank,.hc .rk{font-family:NanumMyeongjo,serif;font-weight:800;font-size:18px;color:#707a8a}
+.pill{font-weight:700}.tag{border-radius:999px}
+.cp,.top{border-radius:999px;padding:2px 10px;font-weight:600}
+.totop{box-shadow:var(--shadow)}
+/* 앱 안에 넣을 땐 앱 제목이 이미 있으니 지도 자체 제목·안내는 숨김 */
+/* 고급스러운 마감 + 움직임 */
+.wrap>h1{font-size:clamp(26px,4.4vw,38px)}.wrap>h1 .grad{background:linear-gradient(120deg,#0f172a 30%,#2c5fd6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{font-size:15px}
+.stats>*{box-shadow:0 1px 2px rgb(16 24 40/.05)}
+.map{background:radial-gradient(120% 90% at 20% 0%,#fff 0,#eef3fd 45%,#dbe5f9 100%)}
+.map::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;box-shadow:inset 0 0 0 1px rgb(255 255 255/.7),inset 0 -60px 80px -40px rgb(44 95 214/.12)}
+.mapside{position:sticky;top:calc(var(--tabh,0px) + 120px)}
+li.h,.hc{box-shadow:0 1px 2px rgb(16 24 40/.04)}
+.chip,.tab,.cp,.top,.ftog,li.h,.hc{transition:background-color .18s,color .18s,border-color .18s,box-shadow .2s,transform .2s cubic-bezier(.2,.8,.2,1)}
+.pill.hot,.top.boom{background:linear-gradient(135deg,#e0435f,#f0745a);color:#fff;border-color:transparent}
+@media (prefers-reduced-motion:no-preference){
+  .wrap>h1,.lede,.stats,.tabs{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+  .lede{animation-delay:.06s}.stats{animation-delay:.12s}
+  .map{animation:mapIn .9s cubic-bezier(.2,.8,.2,1) both}
+  .map .st{transform-box:fill-box;transform-origin:center bottom;animation:pin .55s cubic-bezier(.3,1.5,.5,1) both;animation-delay:var(--d,0s)}
+  .map svg>g[transform][fill="#fff"]{animation:drift 14s ease-in-out infinite alternate}
+  .map svg>text:not(.lab){transform-box:fill-box;animation:bob 4s ease-in-out infinite alternate}
+  .map svg>text:not(.lab):nth-of-type(2n){animation-duration:5.5s;animation-delay:-2s}
+  #list>li,.hot>li{animation:rise .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
+  li.h:hover,.hc:hover{transform:translateY(-2px)}
+  .chip:active,.tab:active,.cp:active,.top:active{transform:scale(.96)}
+  .pill.hot,.top.boom,.boom:not(.pop):not(.wait){background-size:200% 100%;animation:glow 2.4s ease-in-out infinite}
+}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes mapIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@keyframes pin{0%{opacity:0;transform:translateY(-14px) scale(.6)}100%{opacity:1;transform:none}}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(18px)}}
+@keyframes bob{from{transform:translateY(0) rotate(-3deg)}to{transform:translateY(-6px) rotate(3deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgb(224 67 95/.0)}50%{box-shadow:0 0 0 4px rgb(224 67 95/.14)}}
+html.embed h1{display:none}html.embed .wrap{padding-block:16px 40px}
+</style>
+<script>
+/* 핀·목록이 다시 그려질 때마다 순서대로 하나씩 나타나도록 지연 시간을 매김 */
+addEventListener("DOMContentLoaded",()=>{const stagger=(sel,step,max)=>document.querySelectorAll(sel).forEach((el,i)=>el.style.setProperty("--d",Math.min(i*step,max)+"s"));
+const run=()=>{stagger("#map .st",.012,.9);stagger("#list>li",.03,.45);stagger(".hot>li",.03,.45)};
+["map","list","hotList"].forEach(id=>{const el=document.getElementById(id);el&&new MutationObserver(run).observe(el,{childList:true})});run()});
+</script>
+<script>document.documentElement.dataset.theme="light";if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add("embed")</script>
 <div class="wrap">
-  <h1>메이의 숙소여행지도 🗺️</h1>
+  <h1><span class="grad">메이의 숙소여행지도</span> 🗺️</h1>
   <div class="tabs" id="tabs" role="tablist" hidden>
     <button class="tab" role="tab" data-v="map" aria-selected="true">숙소 지도</button>
     <button class="tab" role="tab" data-v="hot" aria-selected="false">🔥 오늘 터진 릴스</button>
@@ -334,8 +411,8 @@ function drawMap(rows, pre) {
     a.p = best || [a.g[0], a.g[1]]; placed.push(a);
   });
   const W = GEO.w, H = GEO.h;
-  const PC = {경기:"#f6c27e",서울:"#ee8f7c",인천:"#f2a98c",강원:"#a9d38c",충북:"#9fb4e6",충남:"#8ec7e3",세종:"#b9a5e3",대전:"#c7b3ec",
-    전북:"#f7da72",전남:"#bcd07a",광주:"#e3d06a",경북:"#f3b3c8",대구:"#ea98b5",울산:"#f0a9a1",경남:"#c9a7df",부산:"#b68fd8",제주:"#86cc86"};
+  const PC = {경기:"#c9d8f8",서울:"#a9c0f2",인천:"#b8ccf5",강원:"#d6e2fa",충북:"#c3d3f7",충남:"#cfdcf9",세종:"#b3c7f4",대전:"#bccef6",
+    전북:"#d3dff9",전남:"#c6d6f8",광주:"#b0c5f3",경북:"#cbd9f8",대구:"#adc3f3",울산:"#b9cbf5",경남:"#c0d1f7",부산:"#a6bdf1",제주:"#d9e4fb"};
   const cloud = (x, y, k) => `<g transform="translate(${x} ${y}) scale(${k})" fill="#fff" opacity=".95"><ellipse cx="0" cy="6" rx="22" ry="9"/><circle cx="-8" cy="0" r="9"/><circle cx="6" cy="-3" r="12"/><circle cx="17" cy="4" r="7"/></g>`;
   const wave = (x, y) => `<path d="M${x} ${y} q5 -5 10 0 t10 0 t10 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>`;
   const deco = [cloud(470, 40, 1), cloud(560, 120, .8), cloud(40, 250, .9), cloud(530, 470, .9), cloud(250, 560, .7),
@@ -345,38 +422,38 @@ function drawMap(rows, pre) {
     `<text class="lab" x="${GEO.prov[p][0]}" y="${GEO.prov[p][1] + (p === "경기" ? -40 : p === "제주" ? -16 : 22)}" font-size="${p === "제주" ? 15 : 19}" opacity=".7">${p}</text>`).join("");
   $("#map").innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="1.5" dy="2.5" stdDeviation="0" flood-color="#1f4f6e" flood-opacity=".35"/></filter>
+      <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="1.5" dy="2.5" stdDeviation="0" flood-color="#1e3a8a" flood-opacity=".16"/></filter>
       <filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" seed="4" result="n"/><feColorMatrix in="n" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -1.6 1.05" result="g"/><feComposite in="g" in2="SourceGraphic" operator="in"/></filter>
       <filter id="brush" x="-2%" y="-2%" width="104%" height="104%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale="3.5"/></filter>
-      <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6cc6ee"/><stop offset="1" stop-color="#3d9fdc"/></linearGradient>
+      <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f6fd"/><stop offset="1" stop-color="#dde7fa"/></linearGradient>
     </defs>
     <rect width="${W}" height="${H}" fill="url(#seaG)"/>
     ${Array.from({ length: 70 }, (_, i) => { const x = (i * 97) % W, y = 40 + (i * 53) % (H - 60), l = 6 + (i % 4) * 3;
       return `<path d="M${x} ${y} h${l}" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="${(.25 + (i % 5) * .1).toFixed(2)}"/>`; }).join("")}
     ${deco}
     <g>${Object.values(GEO.paths).map(d => `<path d="${d}" fill="#fff" stroke="#fff" stroke-width="9" stroke-linejoin="round"/>`).join("")}</g>
-    <g filter="url(#brush)">${Object.entries(GEO.paths).map(([p, d]) => `<path d="${d}" fill="${PC[p] || "#f3e9cf"}" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/>`).join("")}</g>
-    <rect width="${W}" height="${H}" fill="#7a5a3a" filter="url(#grain)" opacity=".16" style="mix-blend-mode:multiply"/>
-    <g transform="translate(${W - 226} ${H - 106})"><rect width="208" height="88" rx="18" fill="#fff8e1" stroke="#fff" stroke-width="3"/>
-      <text x="104" y="34" font-family="Paperlogy" font-weight="700" font-size="20" fill="#2f8fc4" text-anchor="middle">메이의</text>
-      <text x="104" y="72" font-family="Paperlogy" font-weight="700" font-size="31" fill="#3b3a4a" text-anchor="middle" textLength="184" lengthAdjust="spacingAndGlyphs">숙소여행지도</text></g>
+    <g>${Object.entries(GEO.paths).map(([p, d]) => `<path d="${d}" fill="${PC[p] || "#e3eaf8"}" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/>`).join("")}</g>
+    <rect width="${W}" height="${H}" fill="#7a5a3a" filter="url(#grain)" opacity="0"/>
+    <g transform="translate(${W - 226} ${H - 106})"><rect width="208" height="88" rx="18" fill="#fff" stroke="#fff" stroke-width="3"/>
+      <text x="104" y="34" font-family="Pretendard, sans-serif" font-weight="700" font-size="20" fill="#2c5fd6" text-anchor="middle">메이의</text>
+      <text x="104" y="72" font-family="Pretendard, sans-serif" font-weight="700" font-size="31" fill="#0f172a" text-anchor="middle" textLength="184" lengthAdjust="spacingAndGlyphs">숙소여행지도</text></g>
     ${[["⛰️","강원",30,-30,22],["🌲","강원",-20,30,16],["🌸","경북",-25,35,16],["⛰️","경북",20,-45,17],["🌾","전북",35,-5,16],["🍃","전남",35,20,17],["🍊","제주",30,-2,14],["🌲","충북",-10,40,14],["⛰️","경남",-35,-20,15],["🎋","충남",15,35,14]]
       .filter(([, p]) => GEO.prov[p]).map(([e, p, dx, dy, f]) => `<text x="${GEO.prov[p][0] + dx}" y="${GEO.prov[p][1] + dy}" font-size="${f}" opacity=".85">${e}</text>`).join("")}
     ${provLab}
     ${areas.filter(a => Math.hypot(a.p[0] - a.g[0], a.p[1] - a.g[1]) > 8).map(a => `<line x1="${a.g[0]}" y1="${a.g[1]}" x2="${a.p[0].toFixed(1)}" y2="${a.p[1].toFixed(1)}" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 5"/>`).join("")}
-    ${areas.filter(a => a.big || Math.hypot(a.p[0] - a.g[0], a.p[1] - a.g[1]) > 8).map(a => `<circle cx="${a.g[0]}" cy="${a.g[1]}" r="2.4" fill="#3b3a4a" stroke="#fff" stroke-width="1"/>`).join("")}
+    ${areas.filter(a => a.big || Math.hypot(a.p[0] - a.g[0], a.p[1] - a.g[1]) > 8).map(a => `<circle cx="${a.g[0]}" cy="${a.g[1]}" r="2.4" fill="#0f172a" stroke="#fff" stroke-width="1"/>`).join("")}
     ${[...areas].reverse().map(a => { const x = +a.p[0].toFixed(1), y = +a.p[1].toFixed(1), c = TCOL[a.t] || TCOL.기타, on = a.k === AREA;
       const tip = `<title>${esc(a.k)} · 숙소 ${a.n}곳 · 게시 ${a.sum}회 · 주로 ${a.t}</title>`;
-      if (!a.big) return `<g class="st" data-k="${esc(a.k)}" filter="url(#shadow)">${tip}<circle class="ring" cx="${x}" cy="${y}" r="8.5" fill="#fffdf6" stroke="${c}" stroke-width="2.2"/><text x="${x}" y="${y + 3.8}" font-size="10" text-anchor="middle">${TEMO[a.t] || "📍"}</text></g>`;
+      if (!a.big) return `<g class="st" data-k="${esc(a.k)}" filter="url(#shadow)">${tip}<circle class="ring" cx="${x}" cy="${y}" r="8.5" fill="#fff" stroke="${c}" stroke-width="2.2"/><text x="${x}" y="${y + 3.8}" font-size="10" text-anchor="middle">${TEMO[a.t] || "📍"}</text></g>`;
       const L = x - a.w / 2, near = Math.hypot(a.p[0] - a.g[0], a.p[1] - a.g[1]) <= 8, bw = Math.max(15, String(a.n).length * 7 + 8);
       return `<g class="st${on ? " on" : ""}" data-k="${esc(a.k)}" filter="url(#shadow)">${tip}
-        ${near ? `<path d="M${x - 4.5} ${y + a.h / 2 - 1} L${x} ${y + a.h / 2 + 5} L${x + 4.5} ${y + a.h / 2 - 1}Z" fill="${on ? c : "#fffdf6"}" stroke="${c}" stroke-width="2"/>` : ""}
-        <rect class="ring" x="${L}" y="${y - a.h / 2}" width="${a.w}" height="${a.h}" rx="10" fill="${on ? c : "#fffdf6"}" stroke="${c}" stroke-width="2.2"/>
+        ${near ? `<path d="M${x - 4.5} ${y + a.h / 2 - 1} L${x} ${y + a.h / 2 + 5} L${x + 4.5} ${y + a.h / 2 - 1}Z" fill="${on ? c : "#fff"}" stroke="${c}" stroke-width="2"/>` : ""}
+        <rect class="ring" x="${L}" y="${y - a.h / 2}" width="${a.w}" height="${a.h}" rx="10" fill="${on ? c : "#fff"}" stroke="${c}" stroke-width="2.2"/>
         ${on ? "" : `<rect x="${L + 2}" y="${y - a.h / 2 + 2}" width="${a.w - 4}" height="${a.h - 4}" rx="8" fill="${c}" opacity=".2"/>`}
         <text x="${L + 5}" y="${y + 4.3}" font-size="11.5">${a.fire ? "🔥" : ""}${TEMO[a.t] || "📍"}</text>
-        <text x="${L + 21 + (a.fire ? 14 : 0)}" y="${y + 4.3}" font-family="Paperlogy" font-size="12" fill="${on ? "#fff" : "#3b3a4a"}">${esc(a.lab)}</text>
+        <text x="${L + 21 + (a.fire ? 14 : 0)}" y="${y + 4.3}" font-family="Pretendard, sans-serif" font-size="12" fill="${on ? "#fff" : "#0f172a"}">${esc(a.lab)}</text>
         <circle cx="${L + a.w - bw / 2 - 3}" cy="${y}" r="${bw / 2 - 1.5}" fill="${on ? "#fff" : c}"/>
-        <text x="${L + a.w - bw / 2 - 3}" y="${y + 3.6}" font-family="Paperlogy" font-size="10" text-anchor="middle" fill="${on ? c : "#fff"}">${a.n}</text></g>`; }).join("")}
+        <text x="${L + a.w - bw / 2 - 3}" y="${y + 3.6}" font-family="Pretendard, sans-serif" font-size="10" text-anchor="middle" fill="${on ? c : "#fff"}">${a.n}</text></g>`; }).join("")}
   </svg>`;
   $("#map").querySelectorAll(".st").forEach(c => c.onclick = () => { AREA = AREA === c.dataset.k ? "" : c.dataset.k; render(); });
   mzApply();

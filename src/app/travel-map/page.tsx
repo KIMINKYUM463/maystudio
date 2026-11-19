@@ -15,7 +15,6 @@ export default function TravelMapPage() {
     <iframe
       title="메이의 숙소여행지도"
       src="/travel-map.html"
-      sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
       className="block h-[calc(100dvh-3.5rem)] w-full border-0 bg-[#f4f6f7]"
     />
   );

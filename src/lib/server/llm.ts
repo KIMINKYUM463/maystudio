@@ -62,6 +62,7 @@ D(다녀오지 않은 숙소용, 감각·공간 몰입형): "당장 물멍하러
 - 각 장면의 photoLabel(사진 설명)과 narration이 어긋나지 않게 쓴다.
 - narration은 장면당 공백 제외 28~45자, 전체 160~200자. 친근한 존댓말 구어체. 쉼표로 2~3구절을 만든다.
 - hook narration은 "~요", "~다", "?"로 끝나는 완결된 문장이어야 한다("~가고 싶은"처럼 끊긴 문장 금지).
+- 맞춤법을 지킨다. "그렇는데"(→그런데), "~라 그렇는데" 같은 틀린 활용이나 앞뒤가 안 맞는 연결어미는 쓰지 않는다. 소리 내어 읽었을 때 자연스러운 문장만 쓴다.
 - price가 비어 있으면 "가격", "가성비", "~만원대" 같은 가격 언급을 하지 않는다. "김이 오르는"처럼 온도를 암시하는 묘사는 온수·온천·사우나가 제공 정보에 있을 때만 쓴다.
 - hook을 제외한 caption은 캐러셀 사진 위 문구다. narration을 2~3줄(\\n)로 다듬어 쓴다. subCaption은 빈 문자열.
 - hashtags는 # 없이 최대 ${MAX_HASHTAGS}개, 지역/숙소유형/타깃 중심.
@@ -185,7 +186,13 @@ export function hasLlm(settings: Settings): boolean {
 export function dropBanned(text: string | undefined): string | undefined {
   if (!text) return text;
   // Only the broken ",고로" tail; a normal connective ending ("놀기 좋고") must stay.
-  return text.replace(/넉넉한\s*/g, "").replace(/,\s*고로$/, "").trim();
+  return text
+    .replace(/넉넉한\s*/g, "")
+    .replace(/,\s*고로$/, "")
+    // Models conjugate ㅎ-irregulars wrong ("그렇는데"); spoken aloud it sounds broken.
+    .replace(/(그|이|저)렇는데/g, "$1런데")
+    .replace(/(그|이|저)렇은/g, "$1런")
+    .trim();
 }
 
 export function parseLlmOutput(raw: unknown, keyword: string, hiddenName = ""): LlmResult {

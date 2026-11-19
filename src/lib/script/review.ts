@@ -203,11 +203,16 @@ export function refitReviewShots(scenes: Scene[], assets: Project["assets"]): Sc
   // Hook photo first (it is the cover), then lines that name a photo claim it, then the rest keep theirs.
   const firsts: (string | null)[] = scenes.map((s) => (s.kind === "hook" ? s.assetId : null));
   const taken = new Set(firsts.filter((id): id is string => Boolean(id)));
-  scenes.forEach((scene, i) => {
-    if (scene.kind === "hook") return;
-    const matched = bestMatch(scene.narration, ordered.filter((a) => !taken.has(a.id)));
-    if (matched) taken.add((firsts[i] = matched.id));
-  });
+  // A line naming one facility ("심지어 바비큐는…") picks before a quick list ("수영장, 바비큐도") that has other options.
+  const named = (narration: string) => ordered.filter((a) => narrationMatchScore(narration, a.label) > 0).length;
+  scenes
+    .map((scene, i) => ({ scene, i, n: named(scene.narration) }))
+    .filter(({ scene, n }) => scene.kind !== "hook" && n > 0)
+    .sort((a, b) => a.n - b.n || a.i - b.i)
+    .forEach(({ scene, i }) => {
+      const matched = bestMatch(scene.narration, ordered.filter((a) => !taken.has(a.id)));
+      if (matched) taken.add((firsts[i] = matched.id));
+    });
   scenes.forEach((scene, i) => {
     if (firsts[i] || scene.kind === "hook") return;
     const free = ordered.find((a) => !taken.has(a.id))?.id;
@@ -219,10 +224,10 @@ export function refitReviewShots(scenes: Scene[], assets: Project["assets"]): Sc
   // Once fresh photos run out, photos are reused in order (never the same one twice in a row)
   // so footage keeps changing every ~SHOT_SEC instead of one photo holding for 4+ seconds.
   let reuse = 0;
-  const next = (avoid: string | null, narration: string): string | null => {
-    const matched = bestMatch(narration, pool);
-    if (matched) return pool.splice(pool.indexOf(matched), 1)[0].id;
-    if (pool.length) return pool.shift()!.id;
+  const next = (avoid: string | null, narration: string, group: string | undefined): string | null => {
+    // Named photo first, then one from the same group (a water line keeps showing water, not the parking lot).
+    const pick = bestMatch(narration, pool) ?? (group ? pool.find((a) => a.group === group) : undefined) ?? pool[0];
+    if (pick) return pool.splice(pool.indexOf(pick), 1)[0].id;
     for (let tries = 0; tries < order.length; tries++) {
       const id = order[reuse++ % order.length];
       if (id !== avoid) return id;
@@ -240,8 +245,9 @@ export function refitReviewShots(scenes: Scene[], assets: Project["assets"]): Sc
     const assetId = firsts[index];
     const extra: string[] = [];
     let previous = assetId;
+    const group = assetId ? byId.get(assetId)?.group : undefined;
     for (let i = 1; i < cuts; i++) {
-      const id = next(previous, scene.narration);
+      const id = next(previous, scene.narration, group);
       if (!id) break;
       extra.push(id);
       previous = id;
