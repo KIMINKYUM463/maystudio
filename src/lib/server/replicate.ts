@@ -1,3 +1,4 @@
+import { NEGATIVE_PROMPT } from "../script/video-prompts";
 import { extname } from "node:path";
 import { DEFAULT_REPLICATE_MODEL, REPLICATE_I2V_MODELS } from "../replicate-models";
 import type { Settings } from "../types";
@@ -18,7 +19,7 @@ export function imageDataUri(buffer: Buffer, file: string): string {
 
 /** Official I2V models each name the still differently. */
 export function i2vInput(model: string, image: string, prompt: string): Record<string, unknown> {
-  if (model.includes("kling")) return { start_image: image, prompt, duration: 5 };
+  if (model.includes("kling")) return { start_image: image, prompt, duration: 5, negative_prompt: NEGATIVE_PROMPT };
   if (model.includes("seedance")) return { image, prompt, duration: 5, resolution: "720p", aspect_ratio: "9:16" };
   return { image, prompt };
 }

@@ -74,14 +74,17 @@ describe("AI video prompts", () => {
     expect(detectPromptType("객실")).toBe("interior");
     expect(detectPromptType("전경")).toBe("view");
     expect(detectPromptType("조식")).toBe("food");
-    expect(detectPromptType("")).toBe("nature");
+    // Vague names fall back to the photo group, then to the near-still motion that cannot warp anything.
+    expect(detectPromptType("")).toBe("still");
+    expect(detectPromptType("CAVERN", "water")).toBe("hotspring");
+    expect(detectPromptType("SHADE", "room")).toBe("interior");
     expect(labelHasPeople("가족 사진")).toBe(true);
   });
   it("always pins the scene and switches the people clause", () => {
     const empty = buildVideoPrompt("hotspring", false);
     expect(empty).toContain("soft steam rises");
     expect(empty).toContain("No people appear.");
-    expect(empty).toContain("9:16 vertical");
+    expect(empty).toContain("straight lines stay perfectly straight");
     const people = buildVideoPrompt("interior", true);
     expect(people).toContain("Same people throughout the clip");
     expect(people).not.toContain("No people appear.");

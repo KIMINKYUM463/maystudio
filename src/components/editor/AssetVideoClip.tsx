@@ -53,7 +53,7 @@ export function AssetVideoClip({
   const fileInput = useRef<HTMLInputElement>(null);
   const polling = useRef(false);
 
-  const promptType = type ?? detectPromptType(asset.label);
+  const promptType = type ?? detectPromptType(asset.label, asset.group);
   const people = withPeople ?? labelHasPeople(asset.label);
   const clipUrl = `/api/projects/${projectId}/assets/${encodeURIComponent(asset.id)}/clip`;
   const working = busy || Boolean(asset.animateJobId) || locked;

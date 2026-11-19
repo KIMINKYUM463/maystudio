@@ -1,3 +1,4 @@
+import { NEGATIVE_PROMPT } from "@/lib/script/video-prompts";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_REPLICATE_MODEL } from "@/lib/replicate-models";
 import { imageDataUri, i2vInput, modelIdFor, outputFileUrl } from "@/lib/server/replicate";
@@ -19,6 +20,7 @@ describe("replicate i2v", () => {
       start_image: "img",
       prompt: "steam",
       duration: 5,
+      negative_prompt: NEGATIVE_PROMPT,
     });
   });
 

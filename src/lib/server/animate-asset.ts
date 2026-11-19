@@ -61,7 +61,7 @@ export async function startAssetAnimate(
   const asset = project.assets.find((a) => a.id === assetId);
   if (!asset) throw new BadRequestError("사진을 찾을 수 없습니다.");
   if (asset.animateJobId) return { project, status: "processing" };
-  const type = PROMPT_TYPE_IDS.has(options.promptType ?? "") ? (options.promptType as PromptTypeId) : detectPromptType(asset.label);
+  const type = PROMPT_TYPE_IDS.has(options.promptType ?? "") ? (options.promptType as PromptTypeId) : detectPromptType(asset.label, asset.group);
   const prompt = buildVideoPrompt(type, options.withPeople ?? labelHasPeople(asset.label));
   const bytes = await fs.readFile(projectFilePath(id, asset.file));
   const prediction = await createI2vPrediction(settings, imageDataUri(bytes, asset.file), prompt);
