@@ -3,24 +3,27 @@
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { Suspense } from "react";
+import { BrandMark } from "./BrandMark";
+import { GearIcon, openSettings } from "./settings/SettingsDialog";
 import { cx } from "./ui";
 
 const NAV = [
   { href: "/", label: "내 숏폼", segments: [null, "projects"] },
+  { href: "/stays", label: "숙소 추천", segments: ["stays"] },
   { href: "/travel-map", label: "숙소 지도", segments: ["travel-map"] },
   { href: "/links", label: "링크 페이지", segments: ["links"] },
-  { href: "/settings", label: "설정", segments: ["settings"] },
 ] as const;
 
 /** `segment` undefined = not known yet (prerendered shell), so no item is highlighted. */
 function HeaderBar({ segment }: { segment?: string | null }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-bg/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:gap-6 sm:px-5">
         <Link href="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-accent text-sm text-white">M</span>
+          <BrandMark />
           <span className="hidden sm:inline">
-            MayStudio <span className="hidden font-medium text-muted lg:inline">여행 숏폼 팩토리</span>
+            May<span className="text-accent">AI</span>Studio
+            <span className="ml-2.5 hidden border-l border-line pl-2.5 font-medium text-muted lg:inline">여행•숙소 쇼핑숏폼 팩토리</span>
           </span>
         </Link>
         <nav className="ml-auto flex min-w-0 items-center gap-0.5 overflow-x-auto text-xs sm:gap-1 sm:text-sm">
@@ -32,7 +35,7 @@ function HeaderBar({ segment }: { segment?: string | null }) {
                 href={item.href}
                 className={cx(
                   "shrink-0 rounded-lg px-2 py-1.5 font-medium transition sm:px-3",
-                  active ? "bg-surface-2 text-fg" : "text-muted hover:text-fg",
+                  active ? "bg-accent/10 text-accent" : "text-muted hover:bg-surface-2 hover:text-fg",
                 )}
               >
                 {item.label}
@@ -40,6 +43,15 @@ function HeaderBar({ segment }: { segment?: string | null }) {
             );
           })}
         </nav>
+        <button
+          type="button"
+          onClick={openSettings}
+          aria-label="설정"
+          title="설정"
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted transition hover:bg-surface-2 hover:text-fg focus-visible:outline-2 focus-visible:outline-accent"
+        >
+          <GearIcon />
+        </button>
       </div>
     </header>
   );

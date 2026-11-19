@@ -23,7 +23,7 @@ export async function waitForAnimate(editor: StepProps["editor"], projectId: str
   while (true) {
     const result = await editor.run(() => api<AnimateResult>(animatePath(projectId, assetId)));
     if (result.status === "succeeded") return result;
-    if (result.status === "failed") throw new Error(result.error || "Replicate 영상 생성이 실패했어요.");
+    if (result.status === "failed") throw new Error(result.error || "AI 영상 만들기가 실패했어요.");
     await new Promise((resolve) => setTimeout(resolve, ANIMATE_POLL_MS));
   }
 }
@@ -65,7 +65,7 @@ export function AssetVideoClip({
     setBusy(true);
     void waitForAnimate(editor, projectId, asset.id)
       .then(() => {
-        if (!cancelled) toast.success("Replicate 영상을 붙였어요. 이 사진 자리에서 재생돼요.");
+        if (!cancelled) toast.success("AI 영상을 붙였어요. 이 사진 자리에서 재생돼요.");
       })
       .catch((error) => {
         if (!cancelled) toast.error(errorMessage(error));
@@ -151,11 +151,11 @@ export function AssetVideoClip({
           </label>
           {canReplicate ? (
             <Button size="sm" variant="primary" onClick={() => void startReplicate()} loading={busy || Boolean(asset.animateJobId)} disabled={locked}>
-              {asset.videoFile ? "Replicate로 다시 만들기" : "Replicate로 만들기"}
+              {asset.videoFile ? "AI 영상 다시 만들기" : "AI 영상으로 만들기"}
             </Button>
           ) : (
             <p className="text-[11px] text-faint">
-              설정에 Replicate 토큰을 넣으면 여기서 바로 영상을 만들어요. 지금은 Flow에서 만든 mp4를 올릴 수 있어요.
+              설정에 AI 영상 키를 넣으면 여기서 바로 영상을 만들어요. 다른 곳에서 만든 영상(mp4)을 올려도 돼요.
             </p>
           )}
           <CopyButton text={buildVideoPrompt(promptType, people)} label="프롬프트 복사" />

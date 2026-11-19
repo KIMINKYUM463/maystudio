@@ -24,6 +24,13 @@ export const HOOK_ANGLES = [
   "story",
   "tip",
   "price",
+  // Market shopping-shorts structures added from the 2026-11 benchmark (see docs/research).
+  "overseas",
+  "urgency",
+  "secret",
+  "sensory",
+  "target",
+  "reverse",
 ] as const;
 /** Hook angles from earlier versions, mapped to their closest current type. */
 const LEGACY_HOOK_ANGLES: Record<string, (typeof HOOK_ANGLES)[number]> = {
@@ -48,12 +55,34 @@ export const PLATFORMS = [
   "other",
 ] as const;
 export const CAPTION_POSITIONS = ["top", "center", "bottom"] as const;
-export const TTS_PROVIDERS = ["none", "openai", "elevenlabs"] as const;
+/** Spoken-subtitle looks measured on the benchmarks: "serif" = @heo.jinny.gogo, "bold" = 런비 lecture shorts. */
+export const SUBTITLE_STYLES = ["serif", "bold"] as const;
+export const TTS_PROVIDERS = ["none", "typecast", "gemini", "elevenlabs", "openai"] as const;
 export const LLM_PROVIDERS = ["none", "openai", "anthropic", "gemini"] as const;
 export const PROJECT_STATUSES = ["draft", "scripted", "rendering", "done", "error"] as const;
 export const OPENAI_VOICES = ["nova", "shimmer", "coral", "alloy", "echo", "onyx", "sage"] as const;
 /** ElevenLabs premade multilingual voice ("Rachel"); users can paste any voice id. */
 export const ELEVENLABS_DEFAULT_VOICE = "21m00Tcm4TlvDq8ikWAM";
+/** Korean voices picked for travel reels (Typecast ssfm-v30); the first is the default. */
+export const TYPECAST_VOICES = [
+  { id: "tc_692799c46508f6b9468c54c7", label: "다은 · 밝은 쇼츠 톤", name: "다은", tone: "밝고 경쾌한 쇼츠 톤", gender: "female" },
+  { id: "tc_68785db8ba9cd7503f27d921", label: "고운 · 부드러운 톤", name: "고운", tone: "부드럽고 다정한 톤", gender: "female" },
+  { id: "tc_6a7446c19f2d7dfed990a900", label: "은경 · 차분한 톤", name: "은경", tone: "차분한 라디오 톤", gender: "female" },
+  { id: "tc_69f2e455ea79fd197aa0476f", label: "서현 · 또렷한 톤", name: "서현", tone: "또렷한 아나운서 톤", gender: "female" },
+  { id: "tc_691d49ccc47926d741f15913", label: "효은 · 설명하는 톤", name: "효은", tone: "친절하게 설명하는 톤", gender: "female" },
+  { id: "tc_68537c9420b646f2176890ba", label: "서진 · 대화하는 톤", name: "서진", tone: "친구랑 대화하듯", gender: "female" },
+  { id: "tc_68413e12459cfdf27b481183", label: "라연 · 감성 톤", name: "라연", tone: "감성 브이로그 톤", gender: "female" },
+  { id: "tc_67c90ad544cf859417f2fc3a", label: "예진 · 생기 톤", name: "예진", tone: "생기 있는 20대 톤", gender: "female" },
+] as const;
+/** Gemini prebuilt voices that read Korean naturally; the first is the default. */
+export const GEMINI_VOICES = [
+  { id: "Kore", label: "Kore · 또렷한 여성", name: "코어", tone: "또렷하고 단단한 여성", gender: "female" },
+  { id: "Aoede", label: "Aoede · 산뜻한 여성", name: "에이드", tone: "산뜻하고 가벼운 여성", gender: "female" },
+  { id: "Leda", label: "Leda · 어린 여성", name: "레다", tone: "어리고 발랄한 여성", gender: "female" },
+  { id: "Zephyr", label: "Zephyr · 밝은 여성", name: "제퍼", tone: "밝고 시원한 여성", gender: "female" },
+  { id: "Puck", label: "Puck · 경쾌한 남성", name: "퍽", tone: "경쾌한 남성", gender: "male" },
+  { id: "Charon", label: "Charon · 차분한 남성", name: "카론", tone: "차분하고 깊은 남성", gender: "male" },
+] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
 export type CameraMove = (typeof CAMERA_MOVES)[number];
@@ -101,6 +130,8 @@ export const assetSchema = z.object({
   videoFile: z.string().optional(),
   /** In-flight Replicate prediction id; server-managed, never taken from PATCH. */
   animateJobId: z.string().optional(),
+  /** AI photo group (water/signature/room/other); "other" (cars, signs, lobbies) stays out of the reel when possible. */
+  group: z.enum(["water", "signature", "room", "other"]).optional(),
 });
 
 export const sceneSchema = z.object({
@@ -121,6 +152,7 @@ export const sceneSchema = z.object({
 export const styleSchema = z.object({
   template: z.enum(TEMPLATE_IDS).default("emotional"),
   captionPosition: z.enum(CAPTION_POSITIONS).default("bottom"),
+  subtitleStyle: z.enum(SUBTITLE_STYLES).default("serif"),
   accentColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
@@ -225,6 +257,7 @@ export const settingsSchema = z.object({
   geminiKey: z.string().default(""),
   geminiModel: z.string().default("gemini-2.5-flash"),
   elevenlabsKey: z.string().default(""),
+  typecastKey: z.string().default(""),
   /** Replicate token: turns still photos into clips (Wan / Kling), same role as Google Flow. */
   replicateKey: z.string().default(""),
   replicateModel: z.string().default(DEFAULT_REPLICATE_MODEL),
@@ -253,5 +286,6 @@ export const SECRET_SETTING_KEYS = [
   "anthropicKey",
   "geminiKey",
   "elevenlabsKey",
+  "typecastKey",
   "replicateKey",
 ] as const satisfies readonly (keyof Settings)[];

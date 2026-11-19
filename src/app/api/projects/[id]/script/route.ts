@@ -1,7 +1,6 @@
 import { buildCopy, hookLineFor } from "@/lib/script/copy";
 import { applyTextOverrides } from "@/lib/script/generator";
-import { scriptFor } from "@/lib/script/review";
-import { speechSeconds } from "@/lib/script/subtitles";
+import { refitReviewShots, scriptFor } from "@/lib/script/review";
 import { readJsonBody, route } from "@/lib/server/http";
 import { hasLlm, rewriteWithLlm } from "@/lib/server/llm";
 import { getProject, getSettings, nextLinkNumber, saveProject } from "@/lib/server/store";
@@ -38,7 +37,7 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
       const result = await rewriteWithLlm(project, scenes, settings);
       scenes = applyTextOverrides(scenes, result.overrides);
       if (project.style.template === "review") {
-        scenes = scenes.map((s) => ({ ...s, durationSec: speechSeconds(s.narration) }));
+        scenes = refitReviewShots(scenes, project.assets);
       }
       aiHashtags = result.hashtags;
       source = "ai";
@@ -47,7 +46,7 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
     }
   }
 
-  const copy = buildCopy(project, hookLineFor(scenes, project.style.template), keyword);
+  const copy = buildCopy({ ...project, scenes }, hookLineFor(scenes, project.style.template), keyword);
   if (aiHashtags.length) {
     copy.caption = copy.caption.replace(copy.hashtags.map((t) => `#${t}`).join(" "), aiHashtags.map((t) => `#${t}`).join(" "));
     copy.hashtags = aiHashtags;

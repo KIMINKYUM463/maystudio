@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "숙소여행지도 · MayStudio",
+  title: "숙소여행지도 · MayAIStudio",
   description: "AI 여행 릴스에 등장한 숙소와 오늘 반응이 터진 릴스를 한곳에서 찾아봅니다.",
 };
 

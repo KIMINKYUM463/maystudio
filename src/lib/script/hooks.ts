@@ -20,6 +20,12 @@ export const HOOK_ANGLE_LABELS: Record<HookAngle, { label: string; description: 
   story: { label: "이야기형", description: "작은 사건으로 시작해요", example: "엄마 칠순 숙소 찾다가 대박인 곳 찾았어요" },
   tip: { label: "귀띔형", description: "놓치면 아쉬운 걸 알려줘요", example: "겨울에 강릉 가실 거면 무조건 여기 가세요" },
   price: { label: "가격형", description: "가격 대비 퀄리티로 멈추게", example: "강릉에서 1박 8만원대? 이 퀄리티 실화" },
+  overseas: { label: "해외비교형", description: "해외 같은데 국내라는 반전", example: "여기 몽골 아니고 한국이라고 합니다" },
+  urgency: { label: "긴급형", description: "지금 아니면 놓친다는 신호", example: "방 다 차기 전에 지금 저장하세요" },
+  secret: { label: "비밀형", description: "나만 아는 곳을 알려주는 느낌", example: "여기 아직 많이들 모르시더라고요" },
+  sensory: { label: "감각몰입형", description: "소리·온도·풍경으로 끌어들여요", example: "당장 물멍하러 떠나고 싶은 분들" },
+  target: { label: "타깃저격형", description: "딱 그 사람을 불러 세워요", example: "부모님 모시고 갈 곳 찾는다면" },
+  reverse: { label: "역설형", description: "가지 말라며 더 궁금하게", example: "여기 가지 마세요, 집에 오기 싫어져요" },
 };
 
 /**
@@ -75,6 +81,30 @@ export const HOOK_LIBRARY: Record<HookAngle, HookTemplate[]> = {
     { caption: "이 가격 맞아요?\n{region} {feature} 숙소", narration: "이 가격 진짜 맞나 싶은 {region} 숙소예요." },
     { caption: "이 가격에\n이 퀄리티라고?", narration: "이 가격에 이 퀄리티라니 말이 되나요?" },
   ],
+  overseas: [
+    { caption: "여기 {region} 맞아요?\n해외인 줄 알았어요", narration: "여기 {region} 맞아요? 해외인 줄 알았어요." },
+    { caption: "여기 해외 아니고\n한국이라고 합니다", narration: "여기 해외 아니고 한국이라고 합니다." },
+  ],
+  urgency: [
+    { caption: "{season} 방 다 차기 전에\n지금 저장하세요", narration: "{season} 방 다 차기 전에 지금 저장해 두세요." },
+    { caption: "지금 바로\n예약 가능합니다", narration: "지금 바로 예약 가능한 곳이에요." },
+  ],
+  secret: [
+    { caption: "{region}에 숨은\n아직 아무도 모르는 곳", narration: "{region}에 아직 많이들 모르시는 곳이 있어요." },
+    { caption: "여기 아직\n많이들 모르시더라고요", narration: "여기 아직 많이들 모르시는 것 같아요." },
+  ],
+  sensory: [
+    { caption: "{feature}에서\n물멍하고 싶은 분", narration: "당장 {feature}에서 물멍하고 싶은 분들, 여긴 꼭 가보셔야 해요." },
+    { caption: "당장 떠나고 싶은 분들\n여긴 꼭 가보세요", narration: "당장 어디론가 떠나고 싶은 분들, 여긴 꼭 가보셔야 해요." },
+  ],
+  target: [
+    { caption: "{target:이랑} 갈 곳\n찾고 있다면", narration: "{target:이랑} 갈 곳 찾고 계신다면 여기 꼭 보세요." },
+    { caption: "부모님 모시고 갈 곳\n찾는다면", narration: "부모님 모시고 갈 곳 찾고 계신다면 여기예요." },
+  ],
+  reverse: [
+    { caption: "{region} 가도\n여기는 가지 마세요", narration: "{region} 가도 여기는 가지 마세요. 다른 데를 못 가요." },
+    { caption: "여기 가지 마세요\n다시 가고 싶어지니까", narration: "여기 가지 마세요. 집에 오기 싫어지거든요." },
+  ],
 };
 
 /**
@@ -95,6 +125,8 @@ export const REVIEW_HOOK_LIBRARY: Record<HookAngle, HookTemplate[]> = {
   curiosity: [
     { caption: "{region}에 숨어있는\n비밀의 {stayType}", narration: "{region}에 이런 {stayType:이} 숨어 있는 거 아셨어요?" },
     { caption: "여기 해외 아니고\n국내입니다", narration: "여기 해외 아니고 국내에 있는 숙소예요." },
+    // 런비 lecture's top hook.
+    { caption: "비행기표\n당장 취소하세요", narration: "비행기표 당장 취소하세요. 국내에 이런 곳이 숨어 있었어요." },
   ],
   empathy: [
     { caption: "{season}만 되면\n생각나는 {feature}", narration: "{season}만 되면 생각나는 {feature:이} 있는 곳이에요." },
@@ -107,7 +139,9 @@ export const REVIEW_HOOK_LIBRARY: Record<HookAngle, HookTemplate[]> = {
   ],
   twist: [
     { caption: "문만 열고 나가면\n{feature}", narration: "문만 열고 나가면 바로 {feature:이} 있는 숙소가 있어요." },
-    { caption: "문 열자마자\n감탄 나오는 숙소", narration: "문 열자마자 감탄이 나오는 숙소가 있어요." },
+    // @heo.jinny.gogo 33만 views: "문만 열면 바로 낚시를 할 수 있는 말도 안되는 숙소가 있어요".
+    { caption: "{feature:이} 있는\n말도 안 되는 숙소", narration: "문만 열면 바로 {feature:이} 있는 말도 안 되는 숙소가 있어요." },
+    { caption: "평범한 숙소인 줄\n알았는데", narration: "겉으론 평범한 숙소인 줄 알았는데, 안에 들어가면 얘기가 달라요." },
   ],
   story: [
     { caption: "{target:이랑} 갈 곳 찾다가\n찾은 {stayType}", narration: "{target:이랑} 갈 숙소 찾다가 여기를 찾았어요." },
@@ -121,6 +155,32 @@ export const REVIEW_HOOK_LIBRARY: Record<HookAngle, HookTemplate[]> = {
     { caption: "{stayType:이}\n{price}라구요?", narration: "{price}에 이런 {stayType:이} 있다고 합니다." },
     { caption: "{price:에}\n{feature}까지 있어요", narration: "{price:에} {feature}까지 누릴 수 있는 곳이 있어요." },
     { caption: "가격 보고\n눈을 의심했어요", narration: "가격 보고 눈을 의심했어요." },
+    // @heo.jinny.gogo 45.8만 views: "가장 럭셔리한 온천이 1인당 3만원대라구요?".
+    { caption: "{feature:이} 있는데\n{price}라구요?", narration: "{feature:이} 있는 {stayType:이} {price}라구요?" },
+  ],
+  overseas: [
+    { caption: "여기 {region} 맞아요?\n해외 아니에요", narration: "여기 해외 아니고 {region}에 있는 숙소라고 합니다." },
+    { caption: "여기 해외 아니고\n한국입니다", narration: "여기 해외 아니고 한국에 있는 숙소라고 합니다." },
+  ],
+  urgency: [
+    { caption: "{season} 방\n다 차기 전에", narration: "{season} 방 다 차기 전에 꼭 알려드리고 싶은 곳이에요." },
+    { caption: "지금 바로\n예약 가능합니다", narration: "지금 바로 예약 가능한 곳이라 빨리 알려드려요." },
+  ],
+  secret: [
+    { caption: "전화 예약만 받는\n{region} {stayType}", narration: "{region}에 아직 많이들 모르시는 {stayType:이} 있어요." },
+    { caption: "아직 많이들\n모르시는 곳", narration: "여기 아직 많이들 모르시는 것 같아요." },
+  ],
+  sensory: [
+    { caption: "{feature}에서\n물멍하러 가요", narration: "당장 {feature}에서 물멍하러 떠나고 싶은 분들, 여긴 꼭 가보셔야 해요." },
+    { caption: "당장 떠나고 싶은\n분들 보세요", narration: "당장 떠나고 싶은 분들, 여긴 꼭 가보셔야 해요." },
+  ],
+  target: [
+    { caption: "{target:이랑} 갈 곳\n여기 어때요?", narration: "{target:이랑} 갈 곳 찾고 계신다면 여기 꼭 보세요." },
+    { caption: "부모님 모시고\n갈 곳 찾는다면", narration: "부모님 모시고 갈 곳 찾고 계신다면 여기예요." },
+  ],
+  reverse: [
+    { caption: "{region} 가도\n여긴 가지 마세요", narration: "{region} 가도 여기는 가지 마세요. 다른 데를 못 가요." },
+    { caption: "여기 가지 마세요\n집에 오기 싫어져요", narration: "여기 가지 마세요. 집에 오기 싫어지거든요." },
   ],
 };
 

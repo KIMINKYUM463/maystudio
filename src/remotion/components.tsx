@@ -10,6 +10,16 @@ import { FONT, type Theme } from "./theme";
 export const SAFE_TOP = 230;
 export const SAFE_BOTTOM = 430;
 
+/**
+ * One look across mixed footage: listing photos come in flat and bright, AI clips come in punchier,
+ * so photos are lifted and clips pulled back a little toward the same middle; a soft vignette ties both.
+ */
+export const GRADE = {
+  photo: "saturate(1.12) contrast(1.06) brightness(1.01)",
+  clip: "saturate(0.94) contrast(1.02) brightness(1.02)",
+  vignette: "radial-gradient(ellipse 85% 70% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.22) 100%)",
+} as const;
+
 export const CameraImage: React.FC<{
   src: string | null;
   camera: CameraMove;
@@ -49,6 +59,7 @@ export const CameraImage: React.FC<{
           height: "100%",
           objectFit: "cover",
           transform: `scale(${scale}) translate(${x}%, ${y}%)`,
+          filter: GRADE.photo,
           willChange: "transform",
         }}
       />
@@ -73,9 +84,10 @@ const Shot: React.FC<MediaProps & { shot: VideoShot }> = ({ shot, ...media }) =>
       <OffthreadVideo
         src={shot.videoSrc}
         muted
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: GRADE.clip }}
       />
     ) : null}
+    <AbsoluteFill style={{ background: GRADE.vignette }} />
   </AbsoluteFill>
 );
 
@@ -255,16 +267,20 @@ export const Logo: React.FC<{ src: string | null; height?: number; top?: number;
   ) : null;
 
 /** Benchmark-style small "(광고)" in the top-right corner. */
-export const CornerAdLabel: React.FC<{ top?: number; size?: number }> = ({ top = 86, size = 30 }) => (
+/** Design review: at 86px it sat under the Reels camera icon and vanished on bright photos. */
+export const CornerAdLabel: React.FC<{ top?: number; size?: number }> = ({ top = 200, size = 36 }) => (
   <div
     style={{
       position: "absolute",
       top,
-      right: 50,
+      right: 56,
       fontFamily: FONT.sans,
-      fontWeight: 600,
+      fontWeight: 700,
       fontSize: size,
-      color: "rgba(255,255,255,0.88)",
+      color: "#fff",
+      background: "rgba(0,0,0,0.35)",
+      padding: "4px 12px",
+      borderRadius: 8,
       textShadow: SOFT_SHADOW,
     }}
   >
@@ -273,17 +289,26 @@ export const CornerAdLabel: React.FC<{ top?: number; size?: number }> = ({ top =
 );
 
 /** One spoken phrase at a time, hard-switched like the benchmark (no entrance animation). */
-export const Subtitles: React.FC<{ chunks: TimedChunk[]; font: string; size: number; centerY: number }> = ({
+export const Subtitles: React.FC<{ chunks: TimedChunk[]; font: string; size: number; centerY: number; stroke?: number }> = ({
   chunks,
   font,
   size,
   centerY,
+  stroke = 0,
 }) => {
   const frame = useCurrentFrame();
   const current = chunks.find((c) => frame >= c.from && frame < c.from + c.durationInFrames);
   if (!current) return null;
+  // Benchmark subtitles carry no punctuation ("경남 남해," → "경남 남해").
+  const text = current.text.replace(/[,.]+$/, "");
   return (
     <AbsoluteFill style={{ alignItems: "center", pointerEvents: "none" }}>
+      {/* Soft band behind the subtitle line so it reads over bright skies and busy foliage. */}
+      <AbsoluteFill
+        style={{
+          background: `linear-gradient(180deg, transparent ${(centerY - 0.12) * 100}%, rgba(0,0,0,0.22) ${centerY * 100}%, transparent ${(centerY + 0.12) * 100}%)`,
+        }}
+      />
       <div
         style={{
           position: "absolute",
@@ -291,16 +316,20 @@ export const Subtitles: React.FC<{ chunks: TimedChunk[]; font: string; size: num
           transform: "translateY(-50%)",
           padding: "0 60px",
           fontFamily: font,
-          fontWeight: 800,
+          fontWeight: stroke ? 400 : 800,
           fontSize: size,
           lineHeight: 1.25,
           color: "#fff",
           textAlign: "center",
           wordBreak: "keep-all",
-          textShadow: "0 0 10px rgba(0,0,0,0.85), 0 0 24px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.9)",
+          WebkitTextStroke: stroke ? `${stroke}px #111` : "3px rgba(0,0,0,0.55)",
+          paintOrder: "stroke fill",
+          textShadow: stroke
+            ? "0 6px 0 rgba(0,0,0,0.5)"
+            : "0 2px 3px rgba(0,0,0,0.95), 0 0 14px rgba(0,0,0,0.75), 0 0 36px rgba(0,0,0,0.45)",
         }}
       >
-        {current.text}
+        {text}
       </div>
     </AbsoluteFill>
   );

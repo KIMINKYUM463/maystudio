@@ -137,3 +137,11 @@ describe("llm output", () => {
     expect(result.hashtags).toEqual(["강릉숙소", "감성숙소", "a", "b", "c"]);
   });
 });
+
+describe("dropBanned", () => {
+  it("removes unsupported size words and the broken ',고로' tail but keeps normal endings", async () => {
+    const { dropBanned } = await import("@/lib/server/llm");
+    expect(dropBanned("넉넉한 주차장도 있어 편하게 머물기 좋아요,고로")).toBe("주차장도 있어 편하게 머물기 좋아요");
+    expect(dropBanned("애들이랑 놀기 좋고")).toBe("애들이랑 놀기 좋고");
+  });
+});

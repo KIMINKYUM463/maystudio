@@ -18,7 +18,7 @@ export default function PreviewPlayer({ props }: { props: VideoProps }) {
       loop
       clickToPlay
       acknowledgeRemotionLicense
-      style={{ width: "100%", aspectRatio: "9 / 16", borderRadius: 20, overflow: "hidden" }}
+      style={{ width: "100%", aspectRatio: "9 / 16" }}
     />
   );
 }

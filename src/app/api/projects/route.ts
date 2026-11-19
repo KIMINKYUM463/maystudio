@@ -5,6 +5,7 @@ import { createDemoProject } from "@/lib/server/demo";
 import { BadRequestError, readJsonBody, route } from "@/lib/server/http";
 import { createProject, duplicateProject, getClicks, getSettings, listProjects, saveProject } from "@/lib/server/store";
 import { findIdea, IDEA_THEMES, productFromIdea } from "@/lib/stay-ideas";
+import { findMapStay, productFromMapStay } from "@/lib/stay-map";
 import type { Project } from "@/lib/types";
 import { z } from "zod";
 
@@ -21,7 +22,16 @@ const createSchema = z.object({
   ideaId: z.string().max(40).optional(),
   /** Copy an existing project with a different hook (kit: re-upload with only the first line changed). */
   duplicateOf: z.string().max(40).optional(),
+  /** Prefill from a stay in the reaction ranking (메이의 숙소여행지도), by name. */
+  mapStay: z.string().max(120).optional(),
 });
+
+async function createFromMapStay(name: string): Promise<Project> {
+  const stay = findMapStay(name);
+  if (!stay) throw new BadRequestError("지도에서 찾을 수 없는 숙소입니다.");
+  const project = await createProject(await getSettings());
+  return saveProject({ ...project, title: stay.name, product: { ...project.product, ...productFromMapStay(stay) } });
+}
 
 function withNewHook(project: Project): Project {
   const { hookAngle, scenes } = swapHook(project);
@@ -31,7 +41,7 @@ function withNewHook(project: Project): Project {
     hookAngle,
     scenes,
     title: `${project.title} · ${HOOK_ANGLE_LABELS[hookAngle].label}`.slice(0, 80),
-    copy: hookLine ? buildCopy(project, hookLine, project.copy.commentKeyword) : project.copy,
+    copy: hookLine ? buildCopy({ ...project, scenes }, hookLine, project.copy.commentKeyword) : project.copy,
   };
 }
 
@@ -50,11 +60,13 @@ async function createFromIdea(ideaId: string): Promise<Project> {
 }
 
 export const POST = route(async (request: Request) => {
-  const { demo, ideaId, duplicateOf } = createSchema.parse(await readJsonBody(request));
+  const { demo, ideaId, duplicateOf, mapStay } = createSchema.parse(await readJsonBody(request));
   const project = duplicateOf
     ? await duplicateProject(duplicateOf, withNewHook)
     : ideaId
       ? await createFromIdea(ideaId)
+      : mapStay
+        ? await createFromMapStay(mapStay)
       : demo
         ? await createDemoProject()
         : await createProject(await getSettings());

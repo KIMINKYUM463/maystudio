@@ -30,6 +30,8 @@ const TTS_KEY: Record<Voice["provider"], SecretKey | null> = {
   none: null,
   openai: "openaiKey",
   elevenlabs: "elevenlabsKey",
+  typecast: "typecastKey",
+  gemini: "geminiKey",
 };
 
 export function llmReady(settings: MaskedSettings | null): boolean {
@@ -40,6 +42,11 @@ export function llmReady(settings: MaskedSettings | null): boolean {
 export function ttsReady(settings: MaskedSettings | null, provider: Voice["provider"]): boolean {
   const key = TTS_KEY[provider];
   return Boolean(settings && key && settings.configured[key]);
+}
+
+/** Photo classification reads images with Gemini (preferred) or OpenAI. */
+export function visionReady(settings: MaskedSettings | null): boolean {
+  return Boolean(settings?.configured.geminiKey || settings?.configured.openaiKey);
 }
 
 export function replicateReady(settings: MaskedSettings | null): boolean {

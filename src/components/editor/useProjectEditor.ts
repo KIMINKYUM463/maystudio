@@ -129,4 +129,6 @@ export type StepProps = {
   project: Project;
   editor: ProjectEditor;
   settings: MaskedSettings | null;
+  /** Jumps to the video-editor popup (after voice is generated). */
+  openEditor?: () => void;
 };

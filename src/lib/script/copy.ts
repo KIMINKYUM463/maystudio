@@ -1,4 +1,6 @@
-import type { Copy, Platform, Product, Scene, Style, TemplateId } from "../types";
+import { isWeakLabel } from "../photo-groups";
+import type { Asset, Copy, Platform, Product, Scene, Style, TemplateId } from "../types";
+import { dedupeFeatures } from "./generator";
 import { josa } from "./josa";
 import { proofLine, REVIEW_AUDIENCE } from "./review";
 import { audienceOf } from "./romance";
@@ -58,13 +60,31 @@ type CopySource = {
   product: Product;
   style: Pick<Style, "template" | "showName" | "watermark">;
   copy?: Pick<Copy, "linkNumber">;
+  /** Photo names (AI-labelled) fill the ✔️ list when the listing has fewer than four features. */
+  assets?: Pick<Asset, "label" | "group">[];
+  /** The reel's script: the caption retells its middle beats instead of template sentences. */
+  scenes?: Pick<Scene, "id" | "narration">[];
 };
+
+/** Spoken beats end mid-sentence ("…숨어 있었어요,", "…있으니까"); the caption needs whole sentences. */
+export function captionSentence(narration: string): string {
+  const text = narration.replace(/\s*\n\s*/g, " ").trim().replace(/[,\s]+$/, "");
+  if (!text) return "";
+  if (/[.!?]$/.test(text)) return text;
+  return /[요다]$/.test(text) ? `${text}.` : `${text}요.`;
+}
+
+const STORY_BEATS = ["proof", "points"];
+const FEELING_BEATS = ["extras", "kicker"];
 
 /** The caption opens with the hook: the cover line normally, the spoken first sentence for "review". */
 export function hookLineFor(scenes: Pick<Scene, "kind" | "caption" | "narration">[], template: TemplateId): string {
   const hook = scenes.find((s) => s.kind === "hook") ?? scenes[0];
   if (!hook) return "";
-  return template === "review" ? hook.narration || hook.caption : hook.caption;
+  if (template !== "review") return hook.caption;
+  // A long spoken hook makes a weak first caption line; the 2-line cover ("후기 9.7점 / 온수풀 독채") reads better.
+  const spoken = hook.narration.trim();
+  return spoken && spoken.replace(/\s/g, "").length <= 30 ? spoken : hook.caption.replace(/\s*\n\s*/g, " ") || spoken;
 }
 
 const REVIEW_CHECKS = 4;
@@ -75,17 +95,40 @@ const INSTAGRAM_HANDLE = /^@[A-Za-z0-9._]{1,30}$/;
  * → 경험🥰 → ✔️ 4개 → "…라면 한 번쯤은 꼭 가보셨으면 좋겠어요." → 만족✨ → 아무 댓글/팔로우/프로필링크 N번
  * → 해시태그 5개. "[광고]" stays in front so the hook is still the first thing people read.
  */
-export function buildReviewCaption({ product, style, copy }: CopySource, hookLine: string, hashtags: string[]): string {
-  const opener = hookLine.replace(/\s*\n\s*/g, " ").trim();
-  const features = product.features.map((f) => f.trim()).filter(Boolean);
+export function buildReviewCaption({ product, style, copy, assets = [], scenes = [] }: CopySource, hookLine: string, hashtags: string[]): string {
+  // AI hooks may end on a comma ("…있어요,"); the caption's first line must end cleanly.
+  const opener = hookLine.replace(/\s*\n\s*/g, " ").trim().replace(/[,\s]+$/, "");
+  const features = dedupeFeatures(product.features.map((f) => f.trim()).filter(Boolean));
+  // Benchmark captions always carry four ✔️ lines; top up from water/signature photo names.
+  const photoChecks = dedupeFeatures([
+    ...features,
+    ...assets.filter((a) => a.group === "water").map((a) => a.label.trim()),
+    ...assets.filter((a) => a.group === "signature").map((a) => a.label.trim()),
+  ]).filter((f) => !isWeakLabel(f) && !features.includes(f));
+  const checks = [...features, ...photoChecks].slice(0, REVIEW_CHECKS);
   const [first, second] = features;
   const audience = REVIEW_AUDIENCE[audienceOf(product.target)];
-  const had = product.visited ? "있더라고요" : "있어요";
-  const story = first ? [`${proofLine(product)}요,`, `${josa(first, "이")} ${had}.`] : [];
-  const feeling = second
-    ? [`${second}까지 있어서`, `${audience.activity} ${product.visited ? "너무 좋았어요" : "딱 좋아요"}.🥰`]
-    : [];
-  const verdict = product.visited ? "만족도 정말 높았던 숙소였습니다.✨" : "이번 여행지로 자신 있게 추천해요.✨";
+  const beat = (ids: string[]) =>
+    ids.map((id) => captionSentence(scenes.find((sc) => sc.id === id)?.narration ?? "")).filter(Boolean);
+  const scriptStory = beat(STORY_BEATS);
+  const scriptFeeling = beat(FEELING_BEATS);
+  let story: string[];
+  let feeling: string[];
+  if (scriptStory.length && scriptFeeling.length) {
+    // AI-written beats read naturally; the last feeling line carries the benchmark's 🥰.
+    story = scriptStory;
+    feeling = scriptFeeling.map((line, i, all) => (i === all.length - 1 ? `${line}🥰` : line));
+  } else {
+    const had = product.visited ? "있더라고요" : "있어요";
+    const proof = proofLine(product);
+    // "…펜션인데" → "…펜션인데요,"; the non-visited "…숨어 있었어요," already ends a sentence.
+    const proofSentence = /인데$/.test(proof) ? `${proof}요,` : proof.replace(/,$/, ".");
+    story = first ? [proofSentence, `${josa(first, "이")} ${had}.`] : [];
+    feeling = second
+      ? [`${second}까지 있어서`, `${audience.activity} ${product.visited ? "너무 좋았어요" : "딱 좋아요"}.🥰`]
+      : [];
+  }
+  const verdict = product.visited ? "만족도 정말 높았던 숙소였습니다.✨" : "이번 시즌 저장해둘 곳으로 추천해요.✨";
   const handle = style.watermark.trim();
   const lines = [
     `[광고] ${opener}${/[?!.]$/.test(opener) ? "" : "."}😳`,
@@ -94,7 +137,7 @@ export function buildReviewCaption({ product, style, copy }: CopySource, hookLin
     "",
     ...feeling,
     "",
-    ...features.slice(0, REVIEW_CHECKS).map((f) => `✔️ ${f}`),
+    ...checks.map((f) => `✔️ ${f}`),
     "",
     audience.wish,
     "한 번쯤은 꼭 가보셨으면 좋겠어요.",

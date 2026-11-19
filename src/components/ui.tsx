@@ -5,8 +5,8 @@ export function cx(...classes: Array<string | false | null | undefined>): string
 }
 
 const BUTTON_VARIANTS = {
-  primary: "bg-accent text-white hover:bg-accent-strong shadow-[0_6px_20px_-6px_var(--color-accent)]",
-  secondary: "bg-surface-2 text-fg hover:bg-surface-3 border border-line",
+  primary: "bg-accent text-white hover:bg-accent-strong shadow-[0_8px_20px_-10px_rgb(44_95_214/0.7)]",
+  secondary: "bg-surface text-fg hover:bg-surface-2 border border-line shadow-[0_1px_2px_0_rgb(16_24_40/0.04)]",
   ghost: "text-muted hover:text-fg hover:bg-surface-2",
   danger: "text-danger hover:bg-danger/10 border border-danger/30",
 } as const;
@@ -69,7 +69,7 @@ export function Spinner({ className }: { className?: string }) {
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint " +
+  "w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-faint hover:border-[#cbd3df] " +
   "outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60";
 
 export function Field({
@@ -87,7 +87,7 @@ export function Field({
 }) {
   return (
     <div className={cx("flex flex-col gap-1.5", className)}>
-      <label htmlFor={htmlFor} className="text-xs font-semibold text-muted">
+      <label htmlFor={htmlFor} className="text-[13px] font-semibold text-fg">
         {label}
       </label>
       {children}
@@ -97,15 +97,15 @@ export function Field({
 }
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <section className={cx("rounded-2xl border border-line bg-surface p-5", className)}>{children}</section>;
+  return <section className={cx("rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-card)]", className)}>{children}</section>;
 }
 
 export function SectionTitle({ title, description, action }: { title: string; description?: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-4 flex items-start justify-between gap-4">
       <div>
-        <h2 className="text-base font-bold text-fg">{title}</h2>
-        {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
+        <h2 className="text-[17px] font-bold tracking-[-0.015em] text-fg">{title}</h2>
+        {description ? <p className="mt-1 text-sm leading-relaxed text-muted">{description}</p> : null}
       </div>
       {action}
     </div>
@@ -114,17 +114,17 @@ export function SectionTitle({ title, description, action }: { title: string; de
 
 const BADGE_TONES = {
   neutral: "bg-surface-3 text-muted",
-  accent: "bg-accent/15 text-accent",
-  success: "bg-success/15 text-success",
-  warning: "bg-warning/15 text-warning",
-  danger: "bg-danger/15 text-danger",
+  accent: "bg-accent/10 text-accent",
+  success: "bg-success/10 text-success",
+  warning: "bg-warning/10 text-warning",
+  danger: "bg-danger/10 text-danger",
 } as const;
 
 export type BadgeTone = keyof typeof BADGE_TONES;
 
 export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; children: ReactNode }) {
   return (
-    <span className={cx("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold", BADGE_TONES[tone])}>
+    <span className={cx("inline-flex items-center rounded-[10px] px-2 py-0.5 text-[11.5px] font-semibold", BADGE_TONES[tone])}>
       {children}
     </span>
   );

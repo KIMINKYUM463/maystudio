@@ -64,7 +64,7 @@ export function Toaster() {
           <span
             className={cx(
               "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
-              t.tone === "error" ? "bg-danger text-white" : t.tone === "success" ? "bg-success text-black" : "bg-surface-3",
+              t.tone === "error" ? "bg-danger text-white" : t.tone === "success" ? "bg-success text-white" : "bg-surface-3",
             )}
           >
             {TONE_ICON[t.tone]}

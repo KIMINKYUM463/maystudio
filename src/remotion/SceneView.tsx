@@ -179,13 +179,19 @@ const CtaScene: React.FC<SceneProps> = ({ scene, style, theme }) => {
   );
 };
 
-const SubtitleScene: React.FC<SceneProps> = ({ scene, theme }) => {
+/** 런비 shorts: heavy gothic with a black outline, dead centre, 2~6 characters at a time. */
+const BOLD_SUBTITLES = { font: FONT.display, size: 120, centerY: 0.5, stroke: 18, maxChars: 6 };
+
+const SubtitleScene: React.FC<SceneProps> = ({ scene, theme, style }) => {
+  const bold = style.subtitleStyle === "bold";
+  const maxChars = bold ? BOLD_SUBTITLES.maxChars : undefined;
   const chunks = useMemo(
-    () => timeChunks(scene.narration || scene.caption.replace(/\n/g, " "), scene.durationInFrames),
-    [scene.narration, scene.caption, scene.durationInFrames],
+    () => timeChunks(scene.narration || scene.caption.replace(/\n/g, " "), scene.durationInFrames, maxChars),
+    [scene.narration, scene.caption, scene.durationInFrames, maxChars],
   );
   if (!theme.subtitles) return null;
-  return <Subtitles chunks={chunks} {...theme.subtitles} />;
+  const look = bold ? BOLD_SUBTITLES : { ...theme.subtitles, stroke: 0 };
+  return <Subtitles chunks={chunks} font={look.font} size={look.size} centerY={look.centerY} stroke={look.stroke} />;
 };
 
 /**

@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { openSettings } from "@/components/settings/SettingsDialog";
 import { useState } from "react";
 import { toast } from "@/components/toast";
 import { Badge, Button, Card, Field, inputClass, SectionTitle, cx } from "@/components/ui";
 import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
-import { HOOK_ANGLE_LABELS, REVIEW_HOOK_LIBRARY } from "@/lib/script/hooks";
+import { HOOK_ANGLE_LABELS } from "@/lib/script/hooks";
+import { HookStyleDialog } from "./HookStyleDialog";
 import { SCENE_DURATIONS } from "@/lib/script/generator";
 import { romanceSuggestions } from "@/lib/script/romance";
 import { speechSeconds } from "@/lib/script/subtitles";
@@ -15,6 +16,7 @@ import {
   HOOK_ANGLES,
   MAX_SCENE_SHOTS,
   type CameraMove,
+  type HookAngle,
   type Project,
   type Scene,
   type SceneKind,
@@ -43,10 +45,14 @@ const REVIEW_KIND_LABELS: Record<SceneKind, string> = {
 /** Kit: short words that match the video's mood get more comments than generic ones. */
 const KEYWORD_SUGGESTIONS = ["쉼", "여기", "정보", "온천", "한옥", "겨울", "숙소"];
 
+/** Styles shown on the card grid (benchmark top performers); the rest live in the 더보기 popup. */
+const FEATURED_ANGLES: HookAngle[] = ["price", "twist", "overseas", "curiosity", "sensory"];
+
 export function ScriptStep({ project, editor, settings }: StepProps) {
   const aiReady = llmReady(settings);
   const [useAi, setUseAi] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [stylesOpen, setStylesOpen] = useState(false);
   const { scenes, assets } = project;
   const isReview = project.style.template === "review";
   const kindLabels = isReview ? REVIEW_KIND_LABELS : KIND_LABELS;
@@ -117,6 +123,11 @@ export function ScriptStep({ project, editor, settings }: StepProps) {
     });
   }
 
+  // Featured styles first; the one in use always stays visible even if it lives only in the popup.
+  const visibleAngles = FEATURED_ANGLES.includes(project.hookAngle)
+    ? FEATURED_ANGLES
+    : [...FEATURED_ANGLES.slice(0, FEATURED_ANGLES.length - 1), project.hookAngle];
+
   return (
     <div className="flex flex-col gap-5">
       <Card>
@@ -125,7 +136,7 @@ export function ScriptStep({ project, editor, settings }: StepProps) {
           description="첫 문장이 조회수를 결정해요. 반응이 없으면 영상은 그대로 두고 훅만 바꿔 다시 올려보세요."
         />
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {HOOK_ANGLES.map((angle) => (
+          {visibleAngles.map((angle) => (
             <button
               key={angle}
               type="button"
@@ -137,14 +148,24 @@ export function ScriptStep({ project, editor, settings }: StepProps) {
             >
               <p className="text-sm font-bold">{HOOK_ANGLE_LABELS[angle].label}</p>
               <p className="mt-1 text-xs text-muted">{HOOK_ANGLE_LABELS[angle].description}</p>
-              <p className="mt-1.5 text-xs text-faint">
-                &ldquo;{isReview
-                  ? (REVIEW_HOOK_LIBRARY[angle].at(-1)?.caption.replace(/\n/g, " ") ?? HOOK_ANGLE_LABELS[angle].example)
-                  : HOOK_ANGLE_LABELS[angle].example}&rdquo;
-              </p>
+              <p className="mt-1.5 text-xs text-faint">&ldquo;{HOOK_ANGLE_LABELS[angle].example}&rdquo;</p>
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setStylesOpen(true)}
+            className="flex flex-col items-start justify-center rounded-xl border border-dashed border-accent/50 bg-accent/[0.04] p-3 text-left transition hover:bg-accent/10"
+          >
+            <p className="text-sm font-bold text-accent">더보기 · 전체 {HOOK_ANGLES.length}가지</p>
+            <p className="mt-1 text-xs text-muted">스타일별 예시 대본과 구조 분석을 볼 수 있어요</p>
+          </button>
         </div>
+        <HookStyleDialog
+          open={stylesOpen}
+          current={project.hookAngle}
+          onClose={() => setStylesOpen(false)}
+          onPick={(angle) => editor.change("hookAngle", angle)}
+        />
 
         <div className="mt-5 grid gap-4 sm:grid-cols-[200px_1fr] sm:items-end">
           {isReview ? (
@@ -189,9 +210,9 @@ export function ScriptStep({ project, editor, settings }: StepProps) {
               AI로 다듬기
             </label>
             {!aiReady ? (
-              <Link href="/settings" className="text-xs text-accent underline-offset-2 hover:underline">
+              <button type="button" onClick={openSettings} className="text-xs text-accent underline-offset-2 hover:underline">
                 AI 키 설정하기
-              </Link>
+              </button>
             ) : null}
           </div>
         </div>

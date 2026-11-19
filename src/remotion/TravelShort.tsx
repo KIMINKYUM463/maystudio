@@ -1,11 +1,29 @@
-import { linearTiming, TransitionSeries, type TransitionPresentation } from "@remotion/transitions";
+import {
+  linearTiming,
+  TransitionSeries,
+  type TransitionPresentation,
+} from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { slide } from "@remotion/transitions/slide";
 import { wipe } from "@remotion/transitions/wipe";
 import React, { useEffect, useState } from "react";
 import { AbsoluteFill, Audio, Img, Series, useDelayRender } from "remotion";
-import { carouselSlides, TRANSITION_FRAMES, type CarouselProps, type VideoProps } from "../lib/video/props";
-import { Caption, CameraImage, CornerAdLabel, Logo, Overlay, Pill, PriceBadge, SAFE_TOP } from "./components";
+import {
+  carouselSlides,
+  TRANSITION_FRAMES,
+  type CarouselProps,
+  type VideoProps,
+} from "../lib/video/props";
+import {
+  Caption,
+  CameraImage,
+  CornerAdLabel,
+  Logo,
+  Overlay,
+  Pill,
+  PriceBadge,
+  SAFE_TOP,
+} from "./components";
 import { ensureFonts } from "./fonts";
 import { SceneView } from "./SceneView";
 import { FONT, THEMES, type Theme } from "./theme";
@@ -13,8 +31,10 @@ import { FONT, THEMES, type Theme } from "./theme";
 type AnyPresentation = TransitionPresentation<Record<string, unknown>>;
 
 function presentationFor(theme: Theme): AnyPresentation {
-  if (theme.transition === "slide") return slide({ direction: "from-right" }) as AnyPresentation;
-  if (theme.transition === "wipe") return wipe({ direction: "from-left" }) as AnyPresentation;
+  if (theme.transition === "slide")
+    return slide({ direction: "from-right" }) as AnyPresentation;
+  if (theme.transition === "wipe")
+    return wipe({ direction: "from-left" }) as AnyPresentation;
   return fade() as AnyPresentation;
 }
 
@@ -33,20 +53,39 @@ function useFonts(): boolean {
   return ready;
 }
 
-const Blank: React.FC = () => <AbsoluteFill style={{ backgroundColor: "#000" }} />;
+const Blank: React.FC = () => (
+  <AbsoluteFill style={{ backgroundColor: "#000" }} />
+);
 
-export const TravelShort: React.FC<VideoProps> = ({ scenes, style, product, bgmSrc, logoSrc }) => {
+export const TravelShort: React.FC<VideoProps> = ({
+  scenes,
+  style,
+  product,
+  bgmSrc,
+  logoSrc,
+}) => {
   const fontsReady = useFonts();
   const theme = THEMES[style.template];
   if (!fontsReady) return <Blank />;
-  const views = scenes.map((scene) => <SceneView key={scene.id} scene={scene} style={style} product={product} theme={theme} />);
+  const views = scenes.map((scene) => (
+    <SceneView
+      key={scene.id}
+      scene={scene}
+      style={style}
+      product={product}
+      theme={theme}
+    />
+  ));
   // Footage + per-scene graphics live inside each SceneView; Overlay is global motion graphics on top.
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
       {theme.transition === "cut" ? (
         <Series>
           {scenes.map((scene, i) => (
-            <Series.Sequence key={scene.id} durationInFrames={scene.durationInFrames}>
+            <Series.Sequence
+              key={scene.id}
+              durationInFrames={scene.durationInFrames}
+            >
               {views[i]}
             </Series.Sequence>
           ))}
@@ -61,7 +100,11 @@ export const TravelShort: React.FC<VideoProps> = ({ scenes, style, product, bgmS
                   timing={linearTiming({ durationInFrames: TRANSITION_FRAMES })}
                 />
               ) : null}
-              <TransitionSeries.Sequence durationInFrames={scene.durationInFrames}>{views[i]}</TransitionSeries.Sequence>
+              <TransitionSeries.Sequence
+                durationInFrames={scene.durationInFrames}
+              >
+                {views[i]}
+              </TransitionSeries.Sequence>
             </React.Fragment>
           ))}
         </TransitionSeries>
@@ -72,22 +115,68 @@ export const TravelShort: React.FC<VideoProps> = ({ scenes, style, product, bgmS
   );
 };
 
-/** Benchmark reel cover: logo top-left, a bold two-line hook at ~30% height (inside the 3:4 grid crop). */
-const ReviewCover: React.FC<{ imageSrc: string | null; text: string; props: VideoProps; theme: Theme }> = ({
-  imageSrc,
-  text,
-  props,
-  theme,
-}) => (
-  <AbsoluteFill style={{ backgroundColor: "#000" }}>
-    <CameraImage src={imageSrc} camera="push-in" intensity={0} accent={props.style.accentColor} durationInFrames={1} />
-    <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 45%)" }} />
-    <Logo src={props.logoSrc} top={290} />
-    <div style={{ position: "absolute", top: "30%", width: "100%", padding: "0 60px", transform: "translateY(-50%)" }}>
-      <Caption text={text} theme={theme} size={theme.captionSize.hook} accent={props.style.accentColor} animate={false} />
-    </div>
-  </AbsoluteFill>
-);
+/**
+ * Measured on @heo.jinny.gogo's grid: heavy gothic, white with a thick black outline, two lines
+ * that lead with a number ("맨몸으로 가는 4만원대 캠핑장"), so it reads at grid-thumbnail size.
+ */
+const coverTheme = (theme: Theme): Theme => ({
+  ...theme,
+  captionFont: FONT.display,
+  captionWeight: 400,
+  strokeWidth: 14,
+  letterSpacing: "-0.01em",
+  textShadow: "0 6px 18px rgba(0,0,0,0.35)",
+});
+
+/** Benchmark reel cover: logo top-left, a bold two-line hook at ~36% height (inside the 3:4 grid crop). */
+const ReviewCover: React.FC<{
+  imageSrc: string | null;
+  text: string;
+  props: VideoProps;
+  theme: Theme;
+}> = ({ imageSrc, text, props, theme }) => {
+  // Covers carry no punctuation ("남해 호텔, 해외 아니에요" → "남해 호텔 해외 아니에요").
+  const coverText = text.replace(/[,.]/g, "");
+  const longest = Math.max(
+    ...coverText.split("\n").map((l) => l.replace(/\s/g, "").length),
+  );
+  return (
+    <AbsoluteFill style={{ backgroundColor: "#000" }}>
+      <CameraImage
+        src={imageSrc}
+        camera="push-in"
+        intensity={0}
+        accent={props.style.accentColor}
+        durationInFrames={1}
+      />
+      <AbsoluteFill
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 45%)",
+        }}
+      />
+      <Logo src={props.logoSrc} top={290} />
+      <div
+        style={{
+          position: "absolute",
+          top: "36%",
+          width: "100%",
+          padding: "0 56px",
+          transform: "translateY(-50%)",
+        }}
+      >
+        {/* Two lines of up to 8 characters fit the 3:4 grid crop at 128px; longer lines step down to 104px. */}
+        <Caption
+          text={coverText}
+          theme={coverTheme(theme)}
+          size={longest > 8 ? 104 : 128}
+          accent={props.style.accentColor}
+          animate={false}
+        />
+      </div>
+    </AbsoluteFill>
+  );
+};
 
 /** Reels cover image: first scene, static caption, price badge. */
 export const Thumbnail: React.FC<VideoProps> = (props) => {
@@ -97,16 +186,38 @@ export const Thumbnail: React.FC<VideoProps> = (props) => {
   const hook = scenes.find((s) => s.kind === "hook") ?? scenes[0];
   if (!fontsReady || !hook) return <Blank />;
   const imageSrc = hook.shots[0]?.imageSrc ?? null;
-  if (theme.overlay === "corner") return <ReviewCover imageSrc={imageSrc} text={hook.caption} props={props} theme={theme} />;
+  if (theme.overlay === "corner")
+    return (
+      <ReviewCover
+        imageSrc={imageSrc}
+        text={hook.caption}
+        props={props}
+        theme={theme}
+      />
+    );
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
-      <CameraImage src={imageSrc} camera="push-in" intensity={0} accent={style.accentColor} durationInFrames={1} />
+      <CameraImage
+        src={imageSrc}
+        camera="push-in"
+        intensity={0}
+        accent={style.accentColor}
+        durationInFrames={1}
+      />
       <AbsoluteFill style={{ background: theme.scrim }} />
       <AbsoluteFill
-        style={{ background: "radial-gradient(ellipse 80% 40% at 50% 50%, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%)" }}
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 40% at 50% 50%, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%)",
+        }}
       />
       <AbsoluteFill
-        style={{ justifyContent: "center", alignItems: "center", gap: 40, padding: `${SAFE_TOP}px 70px` }}
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 40,
+          padding: `${SAFE_TOP}px 70px`,
+        }}
       >
         <Caption
           text={hook.caption}
@@ -120,7 +231,13 @@ export const Thumbnail: React.FC<VideoProps> = (props) => {
             📍 {product.region}
           </Pill>
         ) : null}
-        {style.showPriceBadge ? <PriceBadge product={product} accent={style.accentColor} animate={false} /> : null}
+        {style.showPriceBadge ? (
+          <PriceBadge
+            product={product}
+            accent={style.accentColor}
+            animate={false}
+          />
+        ) : null}
       </AbsoluteFill>
     </AbsoluteFill>
   );
@@ -138,16 +255,35 @@ export const CarouselSlideStill: React.FC<CarouselProps> = (props) => {
   if (!fontsReady || !slide) return <Blank />;
   const { style } = props;
   const isCover = slide.variant === "cover";
-  const textTop = style.captionPosition === "top" ? "14%" : style.captionPosition === "center" ? "50%" : "74%";
+  const textTop =
+    style.captionPosition === "top"
+      ? "14%"
+      : style.captionPosition === "center"
+        ? "50%"
+        : "74%";
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
       {slide.imageSrc ? (
-        <Img src={slide.imageSrc} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <Img
+          src={slide.imageSrc}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
       ) : (
-        <CameraImage src={null} camera="push-in" intensity={0} accent={style.accentColor} durationInFrames={1} />
+        <CameraImage
+          src={null}
+          camera="push-in"
+          intensity={0}
+          accent={style.accentColor}
+          durationInFrames={1}
+        />
       )}
       {isCover ? (
-        <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.7) 100%)" }} />
+        <AbsoluteFill
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.7) 100%)",
+          }}
+        />
       ) : null}
       <Logo src={props.logoSrc} height={120} top={40} left={40} />
       {style.showAdLabel ? <CornerAdLabel top={48} size={26} /> : null}
@@ -158,7 +294,9 @@ export const CarouselSlideStill: React.FC<CarouselProps> = (props) => {
             left: 0,
             right: 0,
             padding: "0 70px",
-            ...(isCover ? { bottom: 110 } : { top: textTop, transform: "translateY(-50%)" }),
+            ...(isCover
+              ? { bottom: 110 }
+              : { top: textTop, transform: "translateY(-50%)" }),
             color: "#fff",
             textAlign: "center",
             fontFamily: FONT.sans,
@@ -171,7 +309,11 @@ export const CarouselSlideStill: React.FC<CarouselProps> = (props) => {
             textShadow: SLIDE_SHADOW,
           }}
         >
-          {isCover ? <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 18 }}>*</div> : null}
+          {isCover ? (
+            <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 18 }}>
+              *
+            </div>
+          ) : null}
           {slide.text}
         </div>
       ) : null}

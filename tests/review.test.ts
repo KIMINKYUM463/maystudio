@@ -91,29 +91,46 @@ describe("review hook fit", () => {
 });
 
 describe("generateReviewScript", () => {
-  it("builds the benchmark's five spoken beats without a CTA scene", () => {
+  it("builds the benchmark's spoken beats (with a '심지어' kicker) without a CTA scene", () => {
     const { scenes } = generateReviewScript(reviewProject(), 1);
-    expect(scenes.map((s) => s.id)).toEqual(["hook", "proof", "points", "extras", "closing"]);
+    expect(scenes.map((s) => s.id)).toEqual(["hook", "proof", "points", "extras", "kicker", "closing"]);
     expect(scenes.some((s) => s.kind === "cta" || s.kind === "info")).toBe(false);
     for (const scene of scenes) {
       expect(scene.narration.length).toBeGreaterThan(0);
       expect(scene.durationSec).toBe(speechSeconds(scene.narration));
     }
   });
-  it("runs about as long as the benchmark reels (~16.5s)", () => {
+  it("adds the benchmark's '심지어' beat from a 5th fact, preferring a water facility", () => {
+    const project = reviewProject();
+    project.product = { ...project.product, features: [...project.product.features, "주차 무료", "야외 노천탕"] };
+    const scenes = generateReviewScript(project, 1).scenes;
+    expect(scenes.map((s) => s.id)).toEqual(["hook", "proof", "points", "extras", "kicker", "closing"]);
+    expect(scenes.find((s) => s.id === "kicker")?.narration).toBe("심지어 야외 노천탕까지 있다니까요.");
+    expect(scenes.at(-1)?.narration).toMatch(/저장해두세요\.$/);
+  });
+  it("opens on a water-facility photo when one is labelled", () => {
+    const project = reviewProject({ assets: [asset("room", "객실"), asset("pool", "수영장"), asset("view", "오션뷰")] });
+    expect(generateReviewScript(project, 1).scenes[0].assetId).toBe("pool");
+  });
+  it("runs about as long as the benchmark reels (12~30s)", () => {
     const project = reviewProject();
     const scenes = generateReviewScript(project, 1).scenes;
     const seconds = videoDurationInFrames(buildVideoProps({ ...project, scenes }, (f) => f)) / FPS;
     expect(seconds).toBeGreaterThanOrEqual(12);
-    expect(seconds).toBeLessThanOrEqual(22);
+    expect(seconds).toBeLessThanOrEqual(30);
   });
   it("tells the selling points as one story: proof, points, extras", () => {
     const { scenes } = generateReviewScript(reviewProject(), 1);
     const byId = Object.fromEntries(scenes.map((s) => [s.id, s.narration]));
-    expect(byId.proof).toBe("후기 평점이 4.8점이나 되는 강릉 펜션인데");
+    // Not visited: the proof beat says why the hook is true instead of repeating the rating.
+    expect(byId.proof).toBe("강릉에 이런 펜션이 숨어 있었어요,");
     expect(byId.points).toContain("에, ");
     expect(byId.points).toContain("까지 있어서");
-    expect(byId.extras).toMatch(/도 있고 .+까지 있으니까$/);
+    expect(byId.extras).toMatch(/까지 있으니까$/);
+    expect(byId.kicker).toMatch(/^심지어 /);
+    const visited = reviewProject();
+    visited.product = { ...visited.product, visited: true };
+    expect(generateReviewScript(visited, 1).scenes.find((s) => s.id === "proof")?.narration).toBe("후기 평점이 4.8점이나 되는 강릉 펜션인데");
   });
   it("only speaks in first person when the creator actually stayed there", () => {
     expect(allText(reviewProject())).not.toMatch(/더라구요|하고왔어요/);
@@ -142,9 +159,10 @@ describe("generateReviewScript", () => {
     expect(braggableRating("4.8")).toBe("4.8");
     expect(braggableRating("9.2")).toBe("9.2");
     expect(braggableRating("4.1")).toBeNull();
-    const plain = { rating: "", stayType: "한옥", region: "경북 경주", occasion: "" };
+    const plain = { rating: "", stayType: "한옥", region: "경북 경주", occasion: "", visited: true };
     expect(proofLine(plain)).toBe("여기가 바로 경주 한옥인데");
     expect(proofLine({ ...plain, occasion: "겨울 온천 여행" })).toBe("겨울 온천 여행 가기 딱 좋은 경주 한옥인데");
+    expect(proofLine({ ...plain, visited: false })).toBe("경주에 이런 한옥이 숨어 있었어요,");
   });
   it("is picked by scriptFor only for the review template", () => {
     const review = reviewProject();
@@ -213,5 +231,53 @@ describe("review video", () => {
     const props = buildVideoProps({ ...project, style: { ...project.style, logoFile: "assets/logo.png" } }, (f) => `/x/${f}`);
     expect(props.logoSrc).toBe("/x/assets/logo.png");
     expect(props.photos).toHaveLength(project.assets.length);
+  });
+});
+
+describe("new project defaults", () => {
+  it("starts on the benchmark template with a keyed voice, Typecast first", async () => {
+    const { createEmptyProject } = await import("@/lib/project-factory");
+    const none = createEmptyProject("a", "2026-11-19T00:00:00.000Z");
+    expect(none.style.template).toBe("review");
+    expect(none.voice.provider).toBe("none");
+    const keyed = createEmptyProject("b", "2026-11-19T00:00:00.000Z", { geminiKey: "g", typecastKey: "t" });
+    expect(keyed.voice.provider).toBe("typecast");
+    expect(keyed.voice.voiceId).toMatch(/^tc_/);
+  });
+});
+
+describe("refitReviewShots", () => {
+  it("with too few photos, stretches cuts to ~1.4s and never shows a photo twice in a row", async () => {
+    const { refitReviewShots } = await import("@/lib/script/review");
+    const project = reviewProject({ assets: Array.from({ length: 4 }, (_, i) => asset(`p${i}`, "")) });
+    const scenes = generateReviewScript(project, 1).scenes.map((s) => ({
+      ...s,
+      narration: "숲속 노천탕과 실내 수영장이 있어서 물소리만으로도 힐링이 되는 곳이에요",
+    }));
+    const refit = refitReviewShots(scenes, project.assets);
+    for (const scene of refit) {
+      const shots = [scene.assetId, ...scene.extraAssetIds];
+      expect(shots.length).toBe(Math.min(6, Math.max(1, Math.round(scene.durationSec / 1.4))));
+      for (let i = 1; i < shots.length; i++) expect(shots[i]).not.toBe(shots[i - 1]);
+    }
+  });
+});
+
+describe("refitReviewShots matching", () => {
+  it("puts the photo a line names first, and keeps the hook photo", async () => {
+    const { refitReviewShots, narrationMatchScore } = await import("@/lib/script/review");
+    expect(narrationMatchScore("심지어 스케이트장까지 있다니까요", "야외 스케이트장")).toBeGreaterThanOrEqual(4);
+    expect(narrationMatchScore("방 다 차기 전에 저장해두세요", "객실")).toBe(0);
+    const project = reviewProject({
+      assets: [asset("pool", "야외수영장"), asset("bed", "침실"), asset("skate", "스케이트장"), asset("bbq", "바베큐장"), asset("view", "오션뷰"), asset("lobby", "라운지")],
+    });
+    const scenes = generateReviewScript(project, 1).scenes.map((s) =>
+      s.id === "kicker" ? { ...s, narration: "심지어 겨울엔 스케이트장까지 있다니까요" } : s,
+    );
+    const hookPhoto = scenes.find((s) => s.kind === "hook")!.assetId;
+    const refit = refitReviewShots(scenes, project.assets);
+    expect(refit.find((s) => s.kind === "hook")!.assetId).toBe(hookPhoto);
+    const kicker = refit.find((s) => s.id === "kicker");
+    if (kicker) expect(kicker.assetId).toBe("skate");
   });
 });

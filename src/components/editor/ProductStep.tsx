@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import { openSettings } from "@/components/settings/SettingsDialog";
 import { useRef, useState, type DragEvent } from "react";
 import { toast } from "@/components/toast";
 import { Button, Card, Field, inputClass, SectionTitle, cx } from "@/components/ui";
 import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
 import { videoPoster } from "@/lib/client/video-poster";
 import { planMediaUpload } from "@/lib/media-pair";
-import { replicateReady } from "@/lib/settings-view";
+import { animateTargets, type PhotoGroup } from "@/lib/photo-groups";
+import { replicateReady, visionReady } from "@/lib/settings-view";
 import { CATEGORIES, MAX_ASSETS, type Category, type Product, type Project } from "@/lib/types";
 import { animatePath, AssetVideoClip, VIDEO_ACCEPT, waitForAnimate, type AnimateResult } from "./AssetVideoClip";
 import type { StepProps } from "./useProjectEditor";
@@ -66,11 +67,11 @@ export function ProductStep({ project, editor, settings }: StepProps) {
   const [importing, setImporting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [batching, setBatching] = useState(false);
+  const [classifying, setClassifying] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const { product, assets } = project;
   const canReplicate = replicateReady(settings);
-  const stills = assets.filter((a) => !a.videoFile);
 
   const setProduct = (patch: Partial<Product>) => editor.change("product", (p) => ({ ...p, ...patch }));
 
@@ -195,8 +196,32 @@ export function ProductStep({ project, editor, settings }: StepProps) {
     void upload(event.dataTransfer.files);
   }
 
+  /** 런비 recipe: water 3 + signature 2 + room 2, with the best water shot opening the reel. */
+  async function classify() {
+    setClassifying(true);
+    try {
+      const { counts } = await editor.run(() =>
+        api<{ project: Project; counts: Record<PhotoGroup, number> }>(`/api/projects/${project.id}/assets/classify`, {
+          method: "POST",
+        }),
+      );
+      const summary = `물놀이 ${counts.water} · 시그니처 ${counts.signature} · 객실 ${counts.room} · 기타 ${counts.other}`;
+      const short = counts.water < 3 || counts.signature < 2 || counts.room < 2;
+      toast.success(
+        short
+          ? `사진을 분류하고 순서를 바꿨어요. (${summary})
+물놀이 3·시그니처 2·객실 2장이 되도록 사진을 더 넣으면 좋아요.`
+          : `사진을 분류하고 좋은 물놀이 사진이 맨 앞에 오게 바꿨어요. (${summary})`,
+      );
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setClassifying(false);
+    }
+  }
+
   async function animateAll() {
-    const targets = assets.filter((a) => !a.videoFile);
+    const targets = animateTargets(assets);
     if (targets.length === 0) return;
     setBatching(true);
     let ok = 0;
@@ -210,7 +235,7 @@ export function ProductStep({ project, editor, settings }: StepProps) {
           toast.error(`${asset.label || "사진"}: ${errorMessage(error)}`);
         }
       }
-      if (ok > 0) toast.success(`Replicate 영상 ${ok}개를 붙였어요.`);
+      if (ok > 0) toast.success(`AI 영상 ${ok}개를 붙였어요.`);
     } finally {
       setBatching(false);
     }
@@ -327,12 +352,25 @@ export function ProductStep({ project, editor, settings }: StepProps) {
       <Card>
         <SectionTitle
           title={`사진·영상 ${assets.length}/${MAX_ASSETS}`}
-          description="Replicate/Flow는 배경 영상만 만듭니다. 자막·로고·(광고)·장면 전환 모션그래픽은 Remotion이 그 위에 따로 올립니다. 둘 다 최종 릴스에 같이 나가요."
+          description="사진은 그대로 써도 되고, AI로 움직이는 영상으로 바꿔도 돼요. 자막·로고·(광고) 표시는 어느 쪽이든 자동으로 위에 얹혀요."
           action={
             <div className="flex flex-wrap justify-end gap-1">
-              {canReplicate && stills.length > 0 ? (
+              {assets.length > 1 ? (
+                <Button
+                  size="sm"
+                  onClick={() => void classify()}
+                  loading={classifying}
+                  disabled={!visionReady(settings) || uploading || batching}
+                  title={visionReady(settings) ? undefined : "설정에서 Gemini 또는 OpenAI 키를 넣으면 쓸 수 있어요"}
+                >
+                  AI로 사진 분류·정렬
+                </Button>
+              ) : null}
+              {canReplicate && animateTargets(assets).length > 0 ? (
                 <Button size="sm" onClick={() => void animateAll()} loading={batching} disabled={uploading}>
-                  영상 없는 사진 전부
+                  {assets.some((a) => a.group)
+                    ? `물놀이·시그니처 ${animateTargets(assets).length}장 AI 영상으로`
+                    : "영상 없는 사진 전부 AI 영상으로"}
                 </Button>
               ) : null}
               <Button
@@ -443,16 +481,16 @@ export function ProductStep({ project, editor, settings }: StepProps) {
           )}
         </div>
         <p className="mt-3 text-xs text-faint">
-          순서를 바꾼 뒤에는 대본을 다시 만들어야 장면에 반영돼요. 배경에 클립이 없으면 Ken Burns(줌/팬), 있으면 그 mp4가
-          재생되고 — 어느 쪽이든 자막·로고 모션그래픽은 위에 그대로 나가요.{" "}
+          순서를 바꾼 뒤에는 대본을 다시 만들어야 장면에 반영돼요. 사진만 있으면 천천히 확대·이동하는 효과가 들어가고, 영상이
+          있으면 그 영상이 재생돼요.{" "}
           {canReplicate ? (
-            "각 사진의 ‘Replicate로 만들기’ 또는 위 ‘영상 없는 사진 전부’로 배경 영상만 채우면 됩니다. 한 장당 Replicate 요금이 나가요."
+            "각 사진의 ‘AI 영상으로 만들기’나 위 ‘물놀이·시그니처 AI 영상으로’를 누르면 돼요. 한 장 만들 때마다 AI 영상 요금이 조금씩 나가요."
           ) : (
             <>
-              <Link href="/settings" className="text-accent underline-offset-2 hover:underline">
-                설정에서 Replicate 토큰
-              </Link>
-              을 넣으면 Flow 없이 배경 영상을 만들어요.
+              <button type="button" onClick={openSettings} className="text-accent underline-offset-2 hover:underline">
+                설정에서 AI 영상 키
+              </button>
+              를 넣으면 사진을 움직이는 영상으로 바로 바꿀 수 있어요.
             </>
           )}
         </p>

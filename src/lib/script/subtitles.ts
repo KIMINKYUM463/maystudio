@@ -20,31 +20,37 @@ export function speechSeconds(text: string): number {
   return Math.min(10, Math.max(1.5, Math.round((visibleLength(text) / SPEECH_CHARS_PER_SEC) * 10) / 10));
 }
 
-export function subtitleChunks(text: string): string[] {
+export function subtitleChunks(text: string, maxChars = MAX_CHUNK_CHARS): string[] {
   const words = text.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
   const chunks: string[] = [];
   let current = "";
   for (const word of words) {
-    if (current && visibleLength(`${current}${word}`) > MAX_CHUNK_CHARS) {
+    if (current && visibleLength(`${current}${word}`) > maxChars) {
       chunks.push(current);
       current = "";
     }
     current = current ? `${current} ${word}` : word;
     const length = visibleLength(current);
-    if (PUNCTUATION_END.test(word) || length >= MAX_CHUNK_CHARS || (length >= MIN_CHUNK_CHARS && BREAK_AFTER.test(word))) {
+    if (PUNCTUATION_END.test(word) || length >= maxChars || (length >= MIN_CHUNK_CHARS && BREAK_AFTER.test(word))) {
       chunks.push(current);
       current = "";
     }
   }
   if (current) chunks.push(current);
+  // A lone "해요"/"에요" flashing on screen reads as a glitch; attach it to the phrase before.
+  for (let i = chunks.length - 1; i > 0; i--) {
+    if (visibleLength(chunks[i]) < 3 && visibleLength(chunks[i - 1] + chunks[i]) <= maxChars + 2) {
+      chunks.splice(i - 1, 2, `${chunks[i - 1]} ${chunks[i]}`);
+    }
+  }
   return chunks;
 }
 
 export type TimedChunk = { text: string; from: number; durationInFrames: number };
 
 /** Spreads chunks over a scene in proportion to their length, so long phrases stay up longer. */
-export function timeChunks(text: string, durationInFrames: number): TimedChunk[] {
-  const chunks = subtitleChunks(text);
+export function timeChunks(text: string, durationInFrames: number, maxChars = MAX_CHUNK_CHARS): TimedChunk[] {
+  const chunks = subtitleChunks(text, maxChars);
   if (chunks.length === 0 || durationInFrames <= 0) return [];
   const weights = chunks.map((c) => visibleLength(c) + CHUNK_PAUSE_WEIGHT);
   const total = weights.reduce((a, b) => a + b, 0);

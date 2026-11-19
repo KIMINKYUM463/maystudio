@@ -9,6 +9,8 @@ export function sampleProject(overrides: Partial<Project> = {}): Project {
   const base = createEmptyProject("TestProj01", "2026-11-03T00:00:00.000Z");
   return {
     ...base,
+    // Most tests cover the generic five-beat kit; review-template tests switch it explicitly.
+    style: { ...base.style, template: "emotional" },
     product: {
       ...base.product,
       name: "오션뷰 감성 스테이",

@@ -18,12 +18,18 @@ function coverUrl(p: Project): string | null {
 
 export function ProjectCard({
   project: p,
+  number,
+  recent,
   busy,
   onRemove,
   onDuplicate,
   onUpdated,
 }: {
   project: ProjectSummary;
+  /** 1-based creation order, shown as "No.07". */
+  number: number;
+  /** One of the newest projects: gets a "최근" sticker and an accent ring. */
+  recent: boolean;
   busy: boolean;
   onRemove: () => void;
   onDuplicate: () => void;
@@ -48,7 +54,12 @@ export function ProjectCard({
   }
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition hover:border-accent/60">
+    <div
+      className={cx(
+        "group relative flex flex-col overflow-hidden rounded-2xl border bg-surface transition hover:border-accent/60",
+        recent ? "border-accent shadow-[0_18px_36px_-18px_rgb(44_95_214/0.55)] ring-2 ring-accent/25" : "border-line",
+      )}
+    >
       <Link href={`/projects/${p.id}`} className="block">
         <div className="relative aspect-[9/16] bg-surface-2">
           {cover ? (
@@ -57,8 +68,20 @@ export function ProjectCard({
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-40">🏝️</div>
           )}
+          <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+            <span className="tabular rounded-lg bg-black/65 px-2 py-1 text-xs font-bold tracking-wide text-white backdrop-blur-sm">
+              No.{String(number).padStart(2, "0")}
+            </span>
+            {recent ? (
+              <span className="-rotate-3 rounded-lg bg-accent px-2 py-1 text-xs font-extrabold text-white shadow-[0_4px_10px_-2px_rgb(44_95_214/0.6)]">
+                최근
+              </span>
+            ) : null}
+          </div>
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-10">
-            <StatusBadge status={p.status} />
+            <span className="inline-flex rounded-[10px] bg-white">
+              <StatusBadge status={p.status} />
+            </span>
             <p className="mt-1.5 line-clamp-2 text-sm font-bold text-white">{p.title}</p>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { api, errorMessage } from "@/lib/client/api";
 import type { MaskedSettings, SecretKey } from "@/lib/settings-view";
 import { DEFAULT_REPLICATE_MODEL, REPLICATE_I2V_MODELS } from "@/lib/replicate-models";
 import { LLM_PROVIDERS, type Settings } from "@/lib/types";
+import { announceSettingsSaved } from "./SettingsDialog";
 
 type PlainSettings = Omit<Settings, SecretKey>;
 type PlainKey = keyof PlainSettings;
@@ -28,10 +29,11 @@ const SECRETS: Array<{ key: SecretKey; label: string; hint: string; href: string
   { key: "openaiKey", label: "OpenAI API 키", hint: "AI 대본(GPT)과 OpenAI 음성에 함께 쓰여요.", href: "https://platform.openai.com/api-keys" },
   { key: "anthropicKey", label: "Anthropic API 키", hint: "Claude로 대본을 쓸 때 필요해요.", href: "https://console.anthropic.com/settings/keys" },
   { key: "geminiKey", label: "Gemini API 키", hint: "Gemini로 대본을 쓸 때 필요해요.", href: "https://aistudio.google.com/apikey" },
+  { key: "typecastKey", label: "Typecast API 키", hint: "한국어 나레이션 목소리. 키가 있으면 새 숏폼에 자동으로 켜져요.", href: "https://typecast.ai/developers" },
   { key: "elevenlabsKey", label: "ElevenLabs API 키", hint: "자연스러운 한국어 음성이 필요할 때.", href: "https://elevenlabs.io/app/settings/api-keys" },
   {
     key: "replicateKey",
-    label: "Replicate API 토큰",
+    label: "AI 영상 키 (Replicate)",
     hint: "숙소 사진을 영상으로 바꿀 때 써요. Google Flow 대신 프로그램 안에서 바로 만들어요.",
     href: "https://replicate.com/account/api-tokens",
   },
@@ -84,6 +86,7 @@ export function SettingsForm() {
         json: { ...form, ...secrets },
       });
       adopt(settings);
+      announceSettingsSaved(settings);
       toast.success("설정을 저장했어요.");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -169,8 +172,8 @@ export function SettingsForm() {
 
       <Card>
         <SectionTitle
-          title="사진 → 영상 (Replicate)"
-          description="배경 영상(사진→mp4)만 만듭니다. 자막·로고·전환 모션그래픽은 Remotion이 위에 따로 올립니다. 사용량만큼 Replicate 요금이 나가요."
+          title="사진을 AI 영상으로 (Replicate)"
+          description="숙소 사진을 몇 초짜리 움직이는 영상으로 바꿔요. 자막·로고는 자동으로 위에 얹혀요. 만든 만큼 Replicate 요금이 나가요."
         />
         <Field label="모델" hint={REPLICATE_I2V_MODELS.find((m) => m.id === form.replicateModel)?.hint} htmlFor="replicateModel">
           <select

@@ -18,10 +18,11 @@ const MIME: Record<string, string> = {
 
 type Ctx = { params: Promise<{ path: string[] }> };
 
-/** Serves media under data/projects only, with Range support for video/audio seeking. */
+/** Serves media under data/projects and data/catalog only, with Range support for video/audio seeking. */
 export async function GET(request: Request, { params }: Ctx) {
   const segments = (await params).path;
-  if (segments[0] !== "projects") return new Response("Not found", { status: 404 });
+  // Project media plus the ready-made stay catalog photos.
+  if (segments[0] !== "projects" && segments[0] !== "catalog") return new Response("Not found", { status: 404 });
   let file: string;
   try {
     file = resolveDataPath(segments.join("/"));

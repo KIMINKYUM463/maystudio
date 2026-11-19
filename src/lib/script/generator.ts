@@ -91,6 +91,13 @@ export function shortRegion(region: string): string {
 }
 
 /** "온천/스파/사우나" → "온천", "노천탕 (객실 전용)" → "노천탕": facility lists read badly in a hook. */
+/** Removes features that another one already covers ("수영장" when "수영장과 스케이트" exists) and repeats. */
+export function dedupeFeatures(features: string[]): string[] {
+  const norm = (s: string) => s.replace(/\s/g, "");
+  const list = [...new Set(features.map((f) => f.trim()).filter(Boolean))];
+  return list.filter((f, i) => !list.some((g, j) => j !== i && norm(g).length > norm(f).length && norm(g).includes(norm(f))));
+}
+
 export function shortFeature(feature: string | undefined): string {
   return (feature ?? "").split(/[/(]/)[0].trim();
 }

@@ -52,6 +52,6 @@ export async function createDemoProject(): Promise<Project> {
     ...next,
     scenes,
     status: "scripted",
-    copy: buildCopy(next, hookLineFor(scenes, next.style.template), next.copy.commentKeyword),
+    copy: buildCopy({ ...next, scenes }, hookLineFor(scenes, next.style.template), next.copy.commentKeyword),
   });
 }

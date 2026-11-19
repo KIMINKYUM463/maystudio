@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SettingsForm } from "@/components/settings/SettingsForm";
 
-export const metadata: Metadata = { title: "설정 · MayStudio" };
+export const metadata: Metadata = { title: "설정 · MayAIStudio" };
 
 export default function SettingsPage() {
   return (

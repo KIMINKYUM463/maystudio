@@ -30,8 +30,10 @@ export type RenderStarter = { start: () => Promise<void>; starting: boolean; act
 
 /** Benchmark posting routine: reel + carousel per stay, any-comment DM, numbered profile links. */
 const REVIEW_UPLOAD_TIPS = [
+  "올리는 시간은 화·수·일 밤 9~11시가 좋아요. 주 시청층인 30~40대 여성이 가장 많이 보는 시간이에요.",
+  "링크 페이지 제목에는 숙소 이름 대신 번호와 특징만 쓰세요(예: '001 고래 숙소'). 이름을 알면 클릭 없이 검색해 버려요.",
   "릴스 커버는 함께 받은 커버 이미지로 지정하세요. 프로필 그리드(3:4)에서 문구가 잘리지 않게 만들어졌어요.",
-  "배경 영상(Replicate)과 모션그래픽(자막·로고·전환)은 따로입니다. 영상 위에 자막이 같이 나가니, 상품 단계에서 사진→영상을 만들면 됩니다.",
+  "사진을 움직이는 영상으로 바꾸면 더 눈에 띄어요. 자막·로고는 그대로 위에 얹혀 나가니, 상품 단계에서 'AI 영상으로 만들기'를 눌러 보세요.",
   "같은 숙소로 캐러셀(4:5 사진 묶음) 게시물도 하나 더 올리세요. 벤치마크 채널은 릴스와 캐러셀을 번갈아 올려요.",
   "캡션은 그대로 붙여넣으세요. 첫 줄 [광고]와 끝의 대가성 문구는 지우지 마세요.",
   "DM 자동화는 키워드 없이 '모든 댓글'에 반응하게 설정하세요. 캡션이 '아무 댓글이나'라고 안내해요.",
@@ -48,8 +50,8 @@ function checklist(project: Project) {
     {
       ok: assets.some((a) => a.videoFile),
       label: assets.some((a) => a.videoFile)
-        ? `배경 영상 ${assets.filter((a) => a.videoFile).length}/${assets.length}컷 (+ 자막·로고 모션그래픽)`
-        : "배경 영상이 없어요 — 사진은 Ken Burns, 자막·로고 모션그래픽은 그대로 올라가요",
+        ? `AI 영상 ${assets.filter((a) => a.videoFile).length}/${assets.length}컷 준비됐어요`
+        : "AI 영상 없이 사진으로 만들어요 (천천히 움직이는 효과가 들어가요)",
     },
     ...(review
       ? [
@@ -90,7 +92,7 @@ export function ExportStep({ project, renderer }: StepProps & { renderer: Render
               <span
                 className={cx(
                   "flex size-5 items-center justify-center rounded-full text-[11px] font-bold",
-                  item.ok ? "bg-success text-black" : item.required ? "bg-danger text-white" : "bg-surface-3 text-muted",
+                  item.ok ? "bg-success text-white" : item.required ? "bg-danger text-white" : "bg-surface-3 text-muted",
                 )}
               >
                 {item.ok ? "✓" : "!"}

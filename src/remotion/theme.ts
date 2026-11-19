@@ -45,7 +45,8 @@ export const THEMES: Record<TemplateId, Theme> = {
     cameraIntensity: 0.08,
     highlightAccent: false,
     // Measured on the benchmark reels: white 명조, soft black glow, centred at ~42% of the height.
-    subtitles: { font: FONT.serif, size: 66, centerY: 0.42 },
+    // Design review: 66px was lost on busy photos; 84px + thin outline + stronger glow reads on any background.
+    subtitles: { font: FONT.serif, size: 84, centerY: 0.42 },
     overlay: "corner",
   },
   emotional: {
