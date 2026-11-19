@@ -129,7 +129,7 @@ async function postJson(url: string, body: unknown, headers: Record<string, stri
   return res.json();
 }
 
-async function callProvider(settings: Settings, system: string, user: string): Promise<string> {
+export async function callProvider(settings: Settings, system: string, user: string): Promise<string> {
   switch (settings.llmProvider) {
     case "openai": {
       const data = (await postJson(

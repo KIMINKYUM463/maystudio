@@ -2,7 +2,9 @@ import { buildCopy, hookLineFor } from "@/lib/script/copy";
 import { applyTextOverrides } from "@/lib/script/generator";
 import { refitReviewShots, scriptFor, shotSecFor } from "@/lib/script/review";
 import { readJsonBody, route } from "@/lib/server/http";
+import { blurNewFaces } from "@/lib/server/face-blur";
 import { hasLlm, rewriteWithLlm } from "@/lib/server/llm";
+import { addScenery, removeOldScenery } from "@/lib/server/scenery";
 import { getProject, getSettings, nextLinkNumber, saveProject } from "@/lib/server/store";
 import { clearNarration } from "@/lib/server/tts";
 import { hookAngleSchema } from "@/lib/types";
@@ -46,18 +48,38 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
     }
   }
 
-  const copy = buildCopy({ ...project, scenes }, hookLineFor(scenes, project.style.template), keyword);
+  // Free scenery that fits the lines, swapped fresh on every regeneration (never blocks the script).
+  let assets = project.assets;
+  ({ assets, scenes } = await removeOldScenery(id, assets, scenes));
+  if (project.style.autoScenery) {
+    try {
+      ({ assets, scenes } = await addScenery(id, { ...project, assets }, scenes, settings));
+    } catch (error) {
+      console.error("[scenery]", error);
+    }
+  }
+
+  const copy = buildCopy({ ...project, assets, scenes }, hookLineFor(scenes, project.style.template), keyword);
   if (aiHashtags.length) {
     copy.caption = copy.caption.replace(copy.hashtags.map((t) => `#${t}`).join(" "), aiHashtags.map((t) => `#${t}`).join(" "));
     copy.hashtags = aiHashtags;
   }
 
   const cleared = await clearNarration(project);
-  const saved = await saveProject({
+  let saved = await saveProject({
     ...cleared,
+    assets,
     scenes,
     copy,
     status: cleared.status === "draft" ? "scripted" : cleared.status,
   });
+  // Scenery can show people too: same mosaic as the stay's own photos.
+  if (saved.assets.some((a) => a.scenery && !a.faceChecked)) {
+    try {
+      ({ project: saved } = await blurNewFaces(id));
+    } catch (error) {
+      console.error("[faces]", error);
+    }
+  }
   return Response.json({ project: saved, source, warning });
 });

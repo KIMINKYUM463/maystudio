@@ -61,10 +61,17 @@ type CopySource = {
   style: Pick<Style, "template" | "showName" | "watermark">;
   copy?: Pick<Copy, "linkNumber">;
   /** Photo names (AI-labelled) fill the ✔️ list when the listing has fewer than four features. */
-  assets?: Pick<Asset, "label" | "group">[];
+  assets?: (Pick<Asset, "label" | "group"> & Partial<Pick<Asset, "id" | "credit">>)[];
   /** The reel's script: the caption retells its middle beats instead of template sentences. */
-  scenes?: Pick<Scene, "id" | "narration">[];
+  scenes?: (Pick<Scene, "id" | "narration"> & Partial<Pick<Scene, "assetId" | "extraAssetIds">>)[];
 };
+
+/** CC licences (BY, BY-SA) require crediting every free photo the reel actually shows. */
+export function creditLine({ assets = [], scenes = [] }: Pick<CopySource, "assets" | "scenes">): string {
+  const shown = new Set(scenes.flatMap((s) => [s.assetId, ...(s.extraAssetIds ?? [])]));
+  const credits = assets.filter((a) => a.credit && a.id && shown.has(a.id)).map((a) => `${a.credit!.author} (${a.credit!.license})`);
+  return credits.length ? `📷 풍경 사진: ${[...new Set(credits)].join(", ")} · Openverse` : "";
+}
 
 /** Spoken beats end mid-sentence ("…숨어 있었어요,", "…있으니까"); the caption needs whole sentences. */
 export function captionSentence(narration: string): string {
@@ -151,13 +158,14 @@ export function buildReviewCaption({ product, style, copy, assets = [], scenes =
     ...(INSTAGRAM_HANDLE.test(handle) ? [`🩵 바로가기 : ${handle}`] : []),
     "",
     disclosureFor(product.platform),
+    creditLine({ assets, scenes }),
     "",
     hashtags.map((t) => `#${t}`).join(" "),
   ];
   return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-export function buildCaption({ product, style }: CopySource, hookLine: string, keyword: string, hashtags: string[]): string {
+export function buildCaption({ product, style, assets, scenes }: CopySource, hookLine: string, keyword: string, hashtags: string[]): string {
   const place = [product.region, style.showName && product.name].filter(Boolean).join(" | ");
   const info = [
     place && `📍 ${place}`,
@@ -174,6 +182,8 @@ export function buildCaption({ product, style }: CopySource, hookLine: string, k
     "",
     `👉 숙소 정보는 댓글에 '${keyword}' 남겨주세요! DM으로 보내드려요`,
   );
+  const credit = creditLine({ assets, scenes });
+  if (credit) lines.push("", credit);
   return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 

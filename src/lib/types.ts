@@ -145,6 +145,12 @@ export const assetSchema = z.object({
   faceChecked: z.boolean().optional(),
   /** Untouched copy kept when faces were mosaicked, so the mosaic can be undone; server-managed. */
   originalFile: z.string().optional(),
+  /** Free scenery added to match the script (Openverse); replaced when the script is regenerated. */
+  scenery: z.boolean().optional(),
+  /** Author and licence for CC photos; printed in the caption. */
+  credit: z
+    .object({ title: z.string().max(200), author: z.string().max(120), license: z.string().max(40), url: z.string().max(500) })
+    .optional(),
 });
 
 export const sceneSchema = z.object({
@@ -176,6 +182,8 @@ export const styleSchema = z.object({
   cutPace: z.enum(["fast", "normal", "slow"]).default("normal"),
   /** One-click creation also turns the water/signature photos into AI clips (Replicate, billed per clip). */
   animatePhotos: z.boolean().default(false),
+  /** Script generation adds 1~2 free scenery shots (CC0/BY/BY-SA) that fit the lines, credited in the caption. */
+  autoScenery: z.boolean().default(true),
   captionPosition: z.enum(CAPTION_POSITIONS).default("bottom"),
   subtitleStyle: z.enum(SUBTITLE_STYLES).default("serif"),
   accentColor: z

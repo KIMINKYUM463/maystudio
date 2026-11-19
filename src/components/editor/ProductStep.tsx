@@ -415,6 +415,18 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                 />
                 자동 생성 때 사진을 AI 영상으로
               </label>
+              <label
+                className="flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-fg"
+                title="대본을 만들 때, 대사에 어울리는 무료 풍경 사진(CC0·CC BY·CC BY-SA) 1~2장을 장면 중간에 넣고 캡션에 출처를 붙여요."
+              >
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[var(--color-accent)]"
+                  checked={project.style.autoScenery}
+                  onChange={(e) => editor.change("style", (s) => ({ ...s, autoScenery: e.target.checked }))}
+                />
+                대본에 맞는 무료 풍경 컷 넣기
+              </label>
               {canReplicate && animateTargets(assets).length > 0 ? (
                 <Button size="sm" onClick={() => void animateAll()} loading={batching} disabled={uploading}>
                   {assets.some((a) => a.group)
@@ -468,11 +480,23 @@ export function ProductStep({ project, editor, settings }: StepProps) {
               {assets.map((asset, i) => (
                 <li key={asset.id} className="overflow-hidden rounded-xl border border-line bg-surface-2">
                   <div className="relative aspect-[4/5]">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- user media served by our own API */}
-                    <img src={projectFileUrl(project.id, asset.file)} alt={asset.label} className="size-full object-cover" />
                     {asset.videoFile ? (
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/25 text-3xl text-white">▶</span>
-                    ) : asset.animateJobId ? (
+                      // The AI clip plays on its own (muted, looping) so the card shows what the reel will show.
+                      <video
+                        src={projectFileUrl(project.id, asset.videoFile)}
+                        poster={projectFileUrl(project.id, asset.file)}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        aria-label={`${asset.label} AI 영상`}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element -- user media served by our own API
+                      <img src={projectFileUrl(project.id, asset.file)} alt={asset.label} className="size-full object-cover" />
+                    )}
+                    {asset.videoFile ? null : asset.animateJobId ? (
                       <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-xs font-bold text-white">
                         만드는 중…
                       </span>
@@ -520,6 +544,17 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                         삭제
                       </Button>
                     </div>
+                    {asset.credit ? (
+                      <a
+                        href={asset.credit.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate text-[11px] text-muted underline-offset-2 hover:text-fg hover:underline"
+                        title={`${asset.credit.title} — ${asset.credit.author} (${asset.credit.license}). 캡션에 출처가 자동으로 들어가요.`}
+                      >
+                        무료 풍경 · {asset.credit.license} · {asset.credit.author}
+                      </a>
+                    ) : null}
                     {asset.originalFile ? (
                       <button
                         type="button"
