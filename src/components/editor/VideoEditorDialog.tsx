@@ -6,7 +6,7 @@ import { toast } from "@/components/toast";
 import { buttonClass, cx, Spinner } from "@/components/ui";
 import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
 import { speechSeconds } from "@/lib/script/subtitles";
-import type { Project, Scene } from "@/lib/types";
+import type { CoverTemplate, Project, Scene } from "@/lib/types";
 import { FPS, transitionFramesFor, type VideoProps } from "@/lib/video/props";
 import { CopyStep } from "./CopyStep";
 import type { EditorPlayerHandle } from "./EditorPlayer";
@@ -18,6 +18,21 @@ const EditorPlayer = dynamic(() => import("./EditorPlayer"), {
   ssr: false,
   loading: () => <div className="aspect-[9/16] w-full animate-pulse bg-surface-2" />,
 });
+
+const CoverPreview = dynamic(() => import("./CoverPreview"), {
+  ssr: false,
+  loading: () => <div className="aspect-[9/16] w-full animate-pulse bg-surface-2" />,
+});
+
+const COVER_OPTIONS: { id: CoverTemplate; label: string; hint: string }[] = [
+  { id: "auto", label: "자동", hint: "영상 스타일에 맞춰요" },
+  { id: "bold", label: "굵은 한 방", hint: "두꺼운 테두리 글씨" },
+  { id: "magazine", label: "매거진", hint: "명조 제목 · 지역" },
+  { id: "card", label: "정보 카드", hint: "지역 · 가격 카드" },
+  { id: "price", label: "가격 강조", hint: "큰 가격 스티커" },
+  { id: "frame", label: "감성 프레임", hint: "사진 액자 · 종이" },
+  { id: "split", label: "위아래 분할", hint: "사진 + 색 블록" },
+];
 
 const TABS = [
   { id: "scenes", label: "장면" },
@@ -282,18 +297,43 @@ export function VideoEditorDialog({
                 ) : null}
 
                 {tab === "cover" ? (
-                  <div className="grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
-                    <div className="aspect-[9/16] overflow-hidden rounded-2xl bg-surface-3">
-                      {render.thumbnailFile ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- rendered output served by our own API
-                        <img src={projectFileUrl(project.id, render.thumbnailFile, render.finishedAt)} alt="릴스 커버" className="size-full object-cover" />
-                      ) : (
-                        <div className="flex size-full items-center justify-center p-4 text-center text-xs text-muted">영상을 만들면 커버가 여기 나와요.</div>
-                      )}
-                    </div>
+                  <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)]">
                     <div>
-                      <p className="text-sm font-bold">커버 문구</p>
-                      <p className="mt-1 text-xs text-muted">2줄, 숫자·가격이 앞에 오면 프로필 격자에서 잘 보여요. 바꾼 뒤 다시 렌더링하면 커버에 반영돼요.</p>
+                      <div className="overflow-hidden rounded-2xl bg-surface-3 shadow-[var(--shadow-card)]">
+                        <CoverPreview props={videoProps} />
+                      </div>
+                      <p className="mt-2 text-center text-[11px] text-muted">
+                        {render.thumbnailFile ? "영상을 다시 만들면 커버 파일에 반영돼요." : "영상을 만들 때 이 커버가 함께 저장돼요."}
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold">커버 디자인</p>
+                      <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-7" role="radiogroup" aria-label="커버 디자인">
+                        {COVER_OPTIONS.map((option) => {
+                          const active = project.style.coverTemplate === option.id;
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              onClick={() => editor.change("style", (s) => ({ ...s, coverTemplate: option.id }))}
+                              className={cx(
+                                "group rounded-xl border p-1.5 text-left transition",
+                                active ? "border-accent ring-2 ring-accent/30" : "border-line hover:border-accent/40",
+                              )}
+                            >
+                              <div className="pointer-events-none overflow-hidden rounded-lg bg-surface-3">
+                                <CoverPreview props={{ ...videoProps, style: { ...videoProps.style, coverTemplate: option.id } }} />
+                              </div>
+                              <p className={cx("mt-1.5 truncate text-xs font-bold", active ? "text-accent" : "text-fg")}>{option.label}</p>
+                              <p className="truncate text-[10px] text-muted">{option.hint}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="mt-6 text-sm font-bold">커버 문구</p>
+                      <p className="mt-1 text-xs text-muted">2줄, 숫자·가격이 앞에 오면 프로필 격자에서 잘 보여요.</p>
                       {scenes[0] ? (
                         <textarea
                           aria-label="커버 문구"

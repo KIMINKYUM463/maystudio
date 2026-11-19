@@ -24,6 +24,7 @@ import {
   PriceBadge,
   SAFE_TOP,
 } from "./components";
+import { COVERS } from "./covers";
 import { ensureFonts } from "./fonts";
 import { SceneView } from "./SceneView";
 import { FONT, THEMES, type Theme } from "./theme";
@@ -136,7 +137,7 @@ const ReviewCover: React.FC<{
   theme: Theme;
 }> = ({ imageSrc, text, props, theme }) => {
   // Covers carry no punctuation ("남해 호텔, 해외 아니에요" → "남해 호텔 해외 아니에요").
-  const coverText = text.replace(/[,.]/g, "");
+  const coverText = text.replace(/,|\.(?!\d)/g, ""); // keeps "9.5점"
   const longest = Math.max(
     ...coverText.split("\n").map((l) => l.replace(/\s/g, "").length),
   );
@@ -186,6 +187,10 @@ export const Thumbnail: React.FC<VideoProps> = (props) => {
   const hook = scenes.find((s) => s.kind === "hook") ?? scenes[0];
   if (!fontsReady || !hook) return <Blank />;
   const imageSrc = hook.shots[0]?.imageSrc ?? null;
+  if (style.coverTemplate !== "auto") {
+    const Cover = COVERS[style.coverTemplate];
+    return <Cover imageSrc={imageSrc} text={hook.caption} props={props} />;
+  }
   if (theme.overlay === "corner")
     return (
       <ReviewCover

@@ -3,6 +3,8 @@ import { DEFAULT_REPLICATE_MODEL } from "./replicate-models";
 
 /** "review": first-person story reel benchmarked on @heo.jinny.gogo (spoken subtitles, hard cuts, cover + carousel). */
 export const TEMPLATE_IDS = ["review", "emotional", "deal", "luxury"] as const;
+/** Cover (thumbnail) designs; "auto" follows the video template. */
+export const COVER_TEMPLATES = ["auto", "bold", "magazine", "card", "price", "frame", "split"] as const;
 export const CAMERA_MOVES = [
   "push-in",
   "pull-out",
@@ -85,6 +87,7 @@ export const GEMINI_VOICES = [
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
+export type CoverTemplate = (typeof COVER_TEMPLATES)[number];
 export type CameraMove = (typeof CAMERA_MOVES)[number];
 export type SceneKind = (typeof SCENE_KINDS)[number];
 export type HookAngle = (typeof HOOK_ANGLES)[number];
@@ -151,6 +154,7 @@ export const sceneSchema = z.object({
 
 export const styleSchema = z.object({
   template: z.enum(TEMPLATE_IDS).default("emotional"),
+  coverTemplate: z.enum(COVER_TEMPLATES).default("auto"),
   captionPosition: z.enum(CAPTION_POSITIONS).default("bottom"),
   subtitleStyle: z.enum(SUBTITLE_STYLES).default("serif"),
   accentColor: z
