@@ -209,7 +209,7 @@ li.h,.hc{box-shadow:0 1px 2px rgb(16 24 40/.04)}
 @keyframes drift{from{transform:translateX(0)}to{transform:translateX(18px)}}
 @keyframes bob{from{transform:translateY(0) rotate(-3deg)}to{transform:translateY(-6px) rotate(3deg)}}
 @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgb(224 67 95/.0)}50%{box-shadow:0 0 0 4px rgb(224 67 95/.14)}}
-html.embed h1{display:none}html.embed .wrap{padding-block:16px 40px}
+html.embed h1{display:none}html.embed .wrap{padding-block:16px 40px}html.embed .tabs,html.embed .totop{display:none!important}html.embed body{overflow:hidden}html.embed .bar,html.embed .mapside{position:static}
 </style>
 <script>
 /* 핀·목록이 다시 그려질 때마다 순서대로 하나씩 나타나도록 지연 시간을 매김 */
@@ -657,7 +657,7 @@ if (!(OWN && HOT && HOT.items)) return;
     });
     unlRender();
   }
-  tv("map");   // 첫 화면은 숙소 지도 (터진 릴스 탭은 시간당 조회 순으로 열림)
+  tv(new URLSearchParams(location.search).get("view") === "hot" ? "hot" : "map");   // 첫 화면은 숙소 지도 (앱 탭에서 view=hot이면 터진 릴스) (터진 릴스 탭은 시간당 조회 순으로 열림)
 }
 // MayAIStudio: 앱이 모은 최신 릴스가 있으면 그걸로 바꿔 보여줌 (없으면 이 파일에 들어 있는 자료 그대로)
 if (!SRV) (async () => {

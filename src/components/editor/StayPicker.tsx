@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "@/components/toast";
 import { cx } from "@/components/ui";
 import { StayRanking } from "@/components/StayRanking";
+import { MapFrame } from "./MapFrame";
 import { api, errorMessage } from "@/lib/client/api";
 import { MAP_STAYS, productFromMapStay, type MapStay } from "@/lib/stay-map";
 import type { CatalogEntry } from "@/lib/server/catalog";
@@ -17,7 +18,7 @@ const FILL_STEPS = ["숙소 페이지 분석", "사진 가져오기", "상품 �
 const STEP_MS = [1100, 1700, 1500, 900];
 const TICK_MS = 2200;
 
-type Tab = "ai" | "ranking" | "map";
+type Tab = "ai" | "ranking" | "map" | "hot";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -95,6 +96,7 @@ export function StayPicker({ projectId, editor, onDone }: { projectId: string; e
     { id: "ai", label: "AI 추천", count: stays?.length ? `${stays.length}곳` : undefined },
     { id: "ranking", label: "반응 랭킹", count: `${MAP_STAYS.length}곳` },
     { id: "map", label: "숙소 지도" },
+    { id: "hot", label: "🔥 오늘 터진 릴스" },
   ];
 
   const lines = stays ? radarLines(stays) : [];
@@ -156,16 +158,18 @@ export function StayPicker({ projectId, editor, onDone }: { projectId: string; e
         </div>
       ) : null}
 
-      {tab === "map" ? (
+      {tab === "map" || tab === "hot" ? (
         <div className="relative mt-5 overflow-hidden rounded-2xl border border-line">
-          <iframe
-            title="메이의 숙소여행지도"
-            src="/travel-map.html?embed=1"
-            className="block h-[min(78dvh,820px)] w-full border-0 bg-[#f4f6f7]"
-          />
-          <p className="border-t border-line bg-surface-2 px-4 py-2.5 text-xs text-muted">
-            지도에서 마음에 드는 숙소를 찾으면 <button type="button" onClick={() => setTab("ranking")} className="font-bold text-accent underline-offset-2 hover:underline">반응 랭킹</button>에서 이름으로 검색해 바로 만들 수 있어요.
-          </p>
+          <MapFrame view={tab} />
+          {tab === "map" ? (
+            <p className="border-t border-line bg-surface-2 px-4 py-2.5 text-xs text-muted">
+              지도에서 마음에 드는 숙소를 찾으면{" "}
+              <button type="button" onClick={() => setTab("ranking")} className="font-bold text-accent underline-offset-2 hover:underline">
+                반응 랭킹
+              </button>
+              에서 이름으로 검색해 바로 만들 수 있어요.
+            </p>
+          ) : null}
         </div>
       ) : null}
 
