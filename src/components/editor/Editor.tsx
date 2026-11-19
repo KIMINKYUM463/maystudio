@@ -18,6 +18,7 @@ import { StayPicker } from "./StayPicker";
 import { ScriptStep } from "./ScriptStep";
 import { animatePath, waitForAnimate, type AnimateResult } from "./AssetVideoClip";
 import { AutoCreatePanel, type AutoStage } from "./AutoCreatePanel";
+import { BigPreview, ExpandIcon } from "./BigPreview";
 import { StyleStep } from "./StyleStep";
 import { useProjectEditor, type SaveState } from "./useProjectEditor";
 import { VideoEditorDialog } from "./VideoEditorDialog";
@@ -84,6 +85,7 @@ export function Editor({ id }: { id: string }) {
     setEditorOpen(true);
   }
   const [autoRunning, setAutoRunning] = useState(false);
+  const [bigPreview, setBigPreview] = useState(false);
   /** One-click progress panel: the stage the pipeline is in, plus stages it skipped. */
   const [autoStage, setAutoStage] = useState<AutoStage | null>(null);
   const [autoSkipped, setAutoSkipped] = useState<Set<AutoStage>>(new Set());
@@ -376,7 +378,21 @@ export function Editor({ id }: { id: string }) {
         {/* The stay lookbook gets the full width; there is nothing to preview yet. */}
         <aside className={cx("lg:sticky lg:top-20 lg:self-start", step === "stay" && "hidden")}>
           <div className="mx-auto flex max-w-[320px] items-baseline justify-between px-1">
-            <span className="text-sm font-bold text-fg">실시간 미리보기</span>
+            <span className="flex items-center gap-2 text-sm font-bold text-fg">
+              실시간 미리보기
+              {previewProps?.scenes.length ? (
+                <button
+                  type="button"
+                  onClick={() => setBigPreview(true)}
+                  aria-label="미리보기 전체보기"
+                  title="크게 보기"
+                  className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold text-muted hover:bg-surface-2 hover:text-fg"
+                >
+                  <ExpandIcon />
+                  전체보기
+                </button>
+              ) : null}
+            </span>
             <span className="tabular text-xs font-semibold text-muted">
               {videoProps.scenes.length
                 ? `${videoProps.scenes.length}장면 · ${seconds}`
@@ -385,6 +401,7 @@ export function Editor({ id }: { id: string }) {
                   : `0장면 · ${seconds}`}
             </span>
           </div>
+          {bigPreview && previewProps ? <BigPreview props={previewProps} onClose={() => setBigPreview(false)} /> : null}
           <PhoneFrame>
             {previewProps?.scenes.length ? (
               <PreviewPlayer props={previewProps} />

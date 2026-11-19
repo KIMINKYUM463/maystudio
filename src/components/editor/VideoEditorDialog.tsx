@@ -8,6 +8,7 @@ import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
 import { speechSeconds } from "@/lib/script/subtitles";
 import type { CoverTemplate, Project, Scene } from "@/lib/types";
 import { FPS, transitionFramesFor, type VideoProps } from "@/lib/video/props";
+import { BigPreview, ExpandIcon } from "./BigPreview";
 import { CopyStep } from "./CopyStep";
 import type { EditorPlayerHandle } from "./EditorPlayer";
 import { ExportStep, type RenderStarter } from "./ExportStep";
@@ -74,6 +75,7 @@ export function VideoEditorDialog({
   const [frame, setFrame] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [voicing, setVoicing] = useState(false);
+  const [big, setBig] = useState(false);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -206,7 +208,22 @@ export function VideoEditorDialog({
                 <span className="tabular text-xs text-muted">
                   {seconds(frame)}초 / {seconds(starts.at(-1)?.to ?? 0)}초
                 </span>
+                <button
+                  type="button"
+                  aria-label="전체보기"
+                  title="크게 보기"
+                  disabled={!scenes.length}
+                  onClick={() => {
+                    if (playing) player.current?.toggle();
+                    setBig(true);
+                  }}
+                  className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-muted hover:bg-surface-2 hover:text-fg disabled:opacity-40"
+                >
+                  <ExpandIcon />
+                  전체보기
+                </button>
               </div>
+              {big ? <BigPreview props={videoProps} onClose={() => setBig(false)} /> : null}
             </div>
 
             {/* Tabs */}
