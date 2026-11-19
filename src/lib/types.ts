@@ -77,13 +77,38 @@ export const TYPECAST_VOICES = [
   { id: "tc_67c90ad544cf859417f2fc3a", label: "예진 · 생기 톤", name: "예진", tone: "생기 있는 20대 톤", gender: "female" },
 ] as const;
 /** Gemini prebuilt voices that read Korean naturally; the first is the default. */
+/** All 30 Gemini TTS prebuilt voices (ai.google.dev speech-generation); first one is the default. */
 export const GEMINI_VOICES = [
-  { id: "Kore", label: "Kore · 또렷한 여성", name: "코어", tone: "또렷하고 단단한 여성", gender: "female" },
-  { id: "Aoede", label: "Aoede · 산뜻한 여성", name: "에이드", tone: "산뜻하고 가벼운 여성", gender: "female" },
-  { id: "Leda", label: "Leda · 어린 여성", name: "레다", tone: "어리고 발랄한 여성", gender: "female" },
-  { id: "Zephyr", label: "Zephyr · 밝은 여성", name: "제퍼", tone: "밝고 시원한 여성", gender: "female" },
+  { id: "Kore", label: "Kore · 또렷하고 단단한 여성", name: "코어", tone: "또렷하고 단단한 여성", gender: "female" },
+  { id: "Aoede", label: "Aoede · 산뜻하고 가벼운 여성", name: "에이드", tone: "산뜻하고 가벼운 여성", gender: "female" },
+  { id: "Leda", label: "Leda · 어리고 발랄한 여성", name: "레다", tone: "어리고 발랄한 여성", gender: "female" },
+  { id: "Zephyr", label: "Zephyr · 밝고 시원한 여성", name: "제퍼", tone: "밝고 시원한 여성", gender: "female" },
+  { id: "Callirrhoe", label: "Callirrhoe · 느긋하고 편안한 여성", name: "칼리로에", tone: "느긋하고 편안한 여성", gender: "female" },
+  { id: "Autonoe", label: "Autonoe · 밝고 맑은 여성", name: "오토노에", tone: "밝고 맑은 여성", gender: "female" },
+  { id: "Despina", label: "Despina · 부드럽고 매끄러운 여성", name: "데스피나", tone: "부드럽고 매끄러운 여성", gender: "female" },
+  { id: "Erinome", label: "Erinome · 맑고 또렷한 여성", name: "에리노메", tone: "맑고 또렷한 여성", gender: "female" },
+  { id: "Laomedeia", label: "Laomedeia · 경쾌하고 들뜬 여성", name: "라오메데이아", tone: "경쾌하고 들뜬 여성", gender: "female" },
+  { id: "Achernar", label: "Achernar · 포근하고 부드러운 여성", name: "아케르나르", tone: "포근하고 부드러운 여성", gender: "female" },
+  { id: "Gacrux", label: "Gacrux · 차분하고 성숙한 여성", name: "가크룩스", tone: "차분하고 성숙한 여성", gender: "female" },
+  { id: "Pulcherrima", label: "Pulcherrima · 적극적이고 당당한 여성", name: "풀케리마", tone: "적극적이고 당당한 여성", gender: "female" },
+  { id: "Vindemiatrix", label: "Vindemiatrix · 다정하고 온화한 여성", name: "빈데미아트릭스", tone: "다정하고 온화한 여성", gender: "female" },
+  { id: "Sulafat", label: "Sulafat · 따뜻하고 포근한 여성", name: "술라파트", tone: "따뜻하고 포근한 여성", gender: "female" },
   { id: "Puck", label: "Puck · 경쾌한 남성", name: "퍽", tone: "경쾌한 남성", gender: "male" },
-  { id: "Charon", label: "Charon · 차분한 남성", name: "카론", tone: "차분하고 깊은 남성", gender: "male" },
+  { id: "Charon", label: "Charon · 차분하고 깊은 남성", name: "카론", tone: "차분하고 깊은 남성", gender: "male" },
+  { id: "Fenrir", label: "Fenrir · 신나고 들뜬 남성", name: "펜리르", tone: "신나고 들뜬 남성", gender: "male" },
+  { id: "Orus", label: "Orus · 단단하고 믿음직한 남성", name: "오루스", tone: "단단하고 믿음직한 남성", gender: "male" },
+  { id: "Enceladus", label: "Enceladus · 숨결 섞인 낮은 남성", name: "엔켈라두스", tone: "숨결 섞인 낮은 남성", gender: "male" },
+  { id: "Iapetus", label: "Iapetus · 맑고 깔끔한 남성", name: "이아페투스", tone: "맑고 깔끔한 남성", gender: "male" },
+  { id: "Umbriel", label: "Umbriel · 느긋하고 편안한 남성", name: "움브리엘", tone: "느긋하고 편안한 남성", gender: "male" },
+  { id: "Algieba", label: "Algieba · 부드럽고 매끄러운 남성", name: "알기에바", tone: "부드럽고 매끄러운 남성", gender: "male" },
+  { id: "Algenib", label: "Algenib · 거칠고 허스키한 남성", name: "알제닙", tone: "거칠고 허스키한 남성", gender: "male" },
+  { id: "Rasalgethi", label: "Rasalgethi · 설명 잘하는 남성", name: "라살게티", tone: "설명 잘하는 남성", gender: "male" },
+  { id: "Alnilam", label: "Alnilam · 단단하고 힘 있는 남성", name: "알닐람", tone: "단단하고 힘 있는 남성", gender: "male" },
+  { id: "Schedar", label: "Schedar · 고르고 안정적인 남성", name: "셰다르", tone: "고르고 안정적인 남성", gender: "male" },
+  { id: "Achird", label: "Achird · 친근하고 다정한 남성", name: "아키르드", tone: "친근하고 다정한 남성", gender: "male" },
+  { id: "Zubenelgenubi", label: "Zubenelgenubi · 편하고 캐주얼한 남성", name: "주벤엘게누비", tone: "편하고 캐주얼한 남성", gender: "male" },
+  { id: "Sadachbia", label: "Sadachbia · 생기 있고 활발한 남성", name: "사다크비아", tone: "생기 있고 활발한 남성", gender: "male" },
+  { id: "Sadaltager", label: "Sadaltager · 지적이고 신뢰감 있는 남성", name: "사달타게르", tone: "지적이고 신뢰감 있는 남성", gender: "male" },
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
