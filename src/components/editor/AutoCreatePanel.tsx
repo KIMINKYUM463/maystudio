@@ -2,11 +2,12 @@
 
 import { cx } from "@/components/ui";
 
-export const AUTO_STAGES = ["classify", "script", "voice", "render", "done"] as const;
+export const AUTO_STAGES = ["classify", "animate", "script", "voice", "render", "done"] as const;
 export type AutoStage = (typeof AUTO_STAGES)[number] | "error";
 
 const LABELS: Record<(typeof AUTO_STAGES)[number], string> = {
   classify: "AI 사진 분류",
+  animate: "사진 → AI 영상",
   script: "AI 대본 작성",
   voice: "AI 목소리 생성",
   render: "릴스 영상 렌더링",
@@ -35,7 +36,7 @@ export function AutoCreatePanel({
 }) {
   const index = stage === "error" ? -1 : AUTO_STAGES.indexOf(stage);
   const finished = stage === "done" || stage === "error";
-  const overall = stage === "done" ? 100 : Math.round(((Math.max(index, 0) + (stage === "render" ? progress : 0)) / 4) * 100);
+  const overall = stage === "done" ? 100 : Math.round(((Math.max(index, 0) + (stage === "render" ? progress : 0)) / 5) * 100);
 
   return (
     <div
@@ -68,7 +69,7 @@ export function AutoCreatePanel({
         />
       </div>
       <ol className="mt-3 flex flex-col gap-1.5">
-        {AUTO_STAGES.slice(0, 4).map((s, i) => {
+        {AUTO_STAGES.slice(0, 5).map((s, i) => {
           const done = index > i || stage === "done";
           const active = index === i;
           const skip = skipped.has(s);

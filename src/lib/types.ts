@@ -170,6 +170,8 @@ export const styleSchema = z.object({
   /** Flash, location tag, number highlight, progress bar, save sticker. */
   motion: z.boolean().default(true),
   cutPace: z.enum(["fast", "normal", "slow"]).default("normal"),
+  /** One-click creation also turns the water/signature photos into AI clips (Replicate, billed per clip). */
+  animatePhotos: z.boolean().default(false),
   captionPosition: z.enum(CAPTION_POSITIONS).default("bottom"),
   subtitleStyle: z.enum(SUBTITLE_STYLES).default("serif"),
   accentColor: z

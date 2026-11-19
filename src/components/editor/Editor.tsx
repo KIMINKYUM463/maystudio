@@ -8,13 +8,14 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "@/components/toast";
 import { Button, Spinner, cx } from "@/components/ui";
 import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
-import { isGenericLabel } from "@/lib/photo-groups";
-import { llmReady, ttsReady, visionReady, type MaskedSettings } from "@/lib/settings-view";
+import { animateTargets, isGenericLabel } from "@/lib/photo-groups";
+import { llmReady, replicateReady, ttsReady, visionReady, type MaskedSettings } from "@/lib/settings-view";
 import type { Project } from "@/lib/types";
 import { buildVideoProps, formatDuration, videoDurationInFrames } from "@/lib/video/props";
 import { ProductStep } from "./ProductStep";
 import { StayPicker } from "./StayPicker";
 import { ScriptStep } from "./ScriptStep";
+import { animatePath, waitForAnimate, type AnimateResult } from "./AssetVideoClip";
 import { AutoCreatePanel, type AutoStage } from "./AutoCreatePanel";
 import { StyleStep } from "./StyleStep";
 import { useProjectEditor, type SaveState } from "./useProjectEditor";
@@ -146,11 +147,24 @@ export function Editor({ id }: { id: string }) {
       // Unlabelled import photos: let AI sort them first so the best water shot opens the reel.
       const classify = project.assets.length > 1 && project.assets.every((a) => isGenericLabel(a.label)) && visionReady(settings);
       if (!classify) skip("classify");
+      let assets = project.assets;
       if (classify) {
         try {
-          await editor.run(() => api<{ project: Project }>(`/api/projects/${id}/assets/classify`, { method: "POST" }));
+          ({ assets } = (await editor.run(() => api<{ project: Project }>(`/api/projects/${id}/assets/classify`, { method: "POST" }))).project);
         } catch (error) {
           toast.error(`사진 분류는 건너뛰고 진행해요. (${errorMessage(error)})`);
+        }
+      }
+      // Runbi-style: water/signature photos become short AI clips before the script is written (opt-in, billed).
+      setAutoStage("animate");
+      const targets = project.style.animatePhotos && replicateReady(settings) ? animateTargets(assets) : [];
+      if (!targets.length) skip("animate");
+      for (const asset of targets) {
+        try {
+          await editor.run(() => api<AnimateResult>(animatePath(id, asset.id), { method: "POST", json: {} }));
+          await waitForAnimate(editor, id, asset.id);
+        } catch (error) {
+          toast.error(`${asset.label || "사진"} AI 영상은 건너뛰어요. (${errorMessage(error)})`);
         }
       }
       setAutoStage("script");

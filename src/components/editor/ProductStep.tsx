@@ -366,6 +366,22 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                   AI로 사진 분류·정렬
                 </Button>
               ) : null}
+              <label
+                className={cx(
+                  "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold",
+                  canReplicate ? "border-line text-fg" : "border-line text-faint",
+                )}
+                title={canReplicate ? "원클릭 자동 생성 때 물놀이 3장·시그니처 2장을 AI 영상으로 만들어요. 장당 요금이 나가요." : "설정에서 AI 영상 키(Replicate)를 넣으면 켤 수 있어요"}
+              >
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[var(--color-accent)]"
+                  checked={project.style.animatePhotos}
+                  disabled={!canReplicate}
+                  onChange={(e) => editor.change("style", (s) => ({ ...s, animatePhotos: e.target.checked }))}
+                />
+                자동 생성 때 사진을 AI 영상으로
+              </label>
               {canReplicate && animateTargets(assets).length > 0 ? (
                 <Button size="sm" onClick={() => void animateAll()} loading={batching} disabled={uploading}>
                   {assets.some((a) => a.group)
