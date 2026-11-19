@@ -608,7 +608,7 @@ if (!(OWN && HOT && HOT.items)) return;
     $("#hotList").innerHTML = rows.map((r, i) => {
       const hh = r.h ? (DATA.find(d => d.n === r.h) || (r.hc ? { n: r.h, c: r.hc } : null)) : null;   // 서버 버전은 쿠팡 번호(hc)를 같이 받음
       const hotel = r.h ? (hh && hh.c ? `<a href="https://trip.coupang.com/tp/products/${hh.c}" target="_blank" rel="noopener">${esc(r.h)} ↗</a>` : esc(r.h)) : (r.n ? `링크 ${r.n}번` : "");
-      const who = STUDENT ? `<span class="who"></span>` : `<span class="who">${esc(r.ch)}</span>`;
+      const who = STUDENT && !r.ch ? `<span class="who"></span>` : `<span class="who">@${esc(r.ch)}</span>`;
       const btns = `<a class="cp" href="https://www.instagram.com/reel/${r.c}/" target="_blank" rel="noopener">릴스 보기</a> ${hh && hh.c
         ? `<a class="cp" href="https://trip.coupang.com/tp/products/${hh.c}" target="_blank" rel="noopener">쿠팡에서 보기</a>`
         : `<span class="cp wait" title="숙소를 확인하는 중이에요. 확인되면 쿠팡 링크로 바뀌어요">숙소 확인 중</span>`}`;
@@ -659,7 +659,11 @@ if (!(OWN && HOT && HOT.items)) return;
   }
   tv("map");   // 첫 화면은 숙소 지도 (터진 릴스 탭은 시간당 조회 순으로 열림)
 }
-if (!SRV) initHot();
+// MayAIStudio: 앱이 모은 최신 릴스가 있으면 그걸로 바꿔 보여줌 (없으면 이 파일에 들어 있는 자료 그대로)
+if (!SRV) (async () => {
+  try { const r = await fetch("/api/reels/hot", { cache: "no-store" }); if (r.ok) { const j = await r.json(); if (j && j.items && j.items.length) HOT = j; } } catch (e) {}
+  initHot();
+})();
 // HOT-END
 // SRV-START 서버 버전: 비밀번호 → /api/list 로 필요한 만큼만 받기
 async function api(path, opt) {

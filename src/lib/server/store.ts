@@ -15,6 +15,7 @@ export const DATA_DIR = path.resolve(
 const PROJECTS_DIR = path.join(DATA_DIR, "projects");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 const CLICKS_FILE = path.join(DATA_DIR, "clicks.json");
+const REELS_FILE = path.join(DATA_DIR, "reels.json");
 
 const ID_PATTERN = /^[A-Za-z0-9_-]{6,24}$/;
 
@@ -174,4 +175,13 @@ export async function recordClick(projectId: string, now = new Date()): Promise<
 
 export async function getClicks(): Promise<ClickLog> {
   return (await readJson<ClickLog>(CLICKS_FILE)) ?? {};
+}
+
+/** Collected reel snapshots (see reel-collector.ts); shape is owned there. */
+export async function readReelStore<T>(): Promise<T | null> {
+  return readJson<T>(REELS_FILE);
+}
+
+export async function writeReelStore(data: unknown): Promise<void> {
+  await writeJsonAtomic(REELS_FILE, data);
 }

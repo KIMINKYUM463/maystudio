@@ -267,6 +267,16 @@ export const settingsSchema = z.object({
   linkPageBio: z.string().max(120).default("영상 속 숙소 예약 링크를 모아뒀어요"),
   /** Last uploaded channel logo (DATA_DIR-relative); new projects start with a copy of it. */
   brandLogoFile: z.string().optional(),
+  /** Reel collection (Meta Business Discovery): other channels' reel views for 오늘 터진 릴스. */
+  metaToken: z.string().default(""),
+  metaAppId: z.string().default(""),
+  metaAppSecret: z.string().default(""),
+  /** The user's own Instagram professional account id; found from the token on 연결 확인. */
+  igUserId: z.string().default(""),
+  /** Accounts to watch, one username per line. */
+  reelAccounts: z.string().max(5000).default(""),
+  reelIntervalHours: z.number().int().min(1).max(24).default(3),
+  metaTokenRefreshedAt: z.string().default(""),
 });
 
 export type Product = z.infer<typeof productSchema>;
@@ -288,4 +298,6 @@ export const SECRET_SETTING_KEYS = [
   "elevenlabsKey",
   "typecastKey",
   "replicateKey",
+  "metaToken",
+  "metaAppSecret",
 ] as const satisfies readonly (keyof Settings)[];
