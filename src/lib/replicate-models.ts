@@ -32,3 +32,5 @@ export const CLIP_COST_USD: Record<string, number> = {
   "kwaivgi/kling-v2.5-turbo-pro": 0.35,
 };
 export const KRW_PER_USD = 1400;
+/** google/nano-banana season image, per image (replicate.com/google/nano-banana). */
+export const SEASON_IMAGE_COST_USD = 0.039;

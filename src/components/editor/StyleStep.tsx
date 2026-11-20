@@ -13,6 +13,7 @@ import {
   cx,
 } from "@/components/ui";
 import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
+import { DefaultsCard } from "./DefaultsCard";
 import { ttsReady } from "@/lib/settings-view";
 import {
   CAPTION_POSITIONS,
@@ -840,6 +841,8 @@ export function StyleStep({
           )}
         </div>
       </Card>
+
+      <DefaultsCard project={project} settings={settings} />
     </div>
   );
 }

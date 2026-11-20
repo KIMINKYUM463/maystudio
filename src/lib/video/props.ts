@@ -15,7 +15,8 @@ export function transitionFramesFor(template: TemplateId): number {
   return THEMES[template].transition === "cut" ? 0 : TRANSITION_FRAMES;
 }
 /** Silence kept after a narration line so it is not cut by the next transition. */
-const NARRATION_TAIL_SEC = 0.35;
+/** Breath after each line; TTS edge silence is trimmed at generation, so this is the whole gap. */
+const NARRATION_TAIL_SEC = 0.2;
 
 /** One cut inside a scene: the photo, plus its AI clip when one was uploaded. */
 export type VideoShot = { imageSrc: string; videoSrc: string | null };

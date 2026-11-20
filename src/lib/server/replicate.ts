@@ -75,6 +75,23 @@ export async function createI2vPrediction(settings: Settings, image: string, pro
   return data;
 }
 
+/** Image-edit model for season images: keeps the place, repaints the season, outputs 9:16 (~$0.039 per image). */
+export const SEASON_IMAGE_MODEL = "google/nano-banana";
+
+export async function createSeasonImagePrediction(settings: Settings, image: string, prompt: string): Promise<Prediction> {
+  if (!settings.replicateKey.trim()) throw new BadRequestError("설정에서 Replicate API 토큰을 입력하세요.");
+  const data = (await replicateJson(
+    settings.replicateKey,
+    `https://api.replicate.com/v1/models/${SEASON_IMAGE_MODEL}/predictions`,
+    {
+      method: "POST",
+      body: JSON.stringify({ input: { prompt, image_input: [image], aspect_ratio: "9:16", output_format: "jpg" } }),
+    },
+  )) as Prediction;
+  if (!data?.id) throw new BadRequestError("Replicate가 작업 ID를 주지 않았어요.");
+  return data;
+}
+
 export async function getPrediction(settings: Settings, id: string): Promise<Prediction> {
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) throw new BadRequestError("잘못된 작업 ID예요.");
   return (await replicateJson(settings.replicateKey, `https://api.replicate.com/v1/predictions/${id}`)) as Prediction;

@@ -58,6 +58,9 @@ export const PLATFORMS = [
   "other",
 ] as const;
 export const CAPTION_POSITIONS = ["top", "center", "bottom"] as const;
+/** Season painted onto photos before they become AI clips; "auto" follows today's month. */
+export const SEASONS = ["auto", "spring", "summer", "autumn", "winter"] as const;
+export type Season = (typeof SEASONS)[number];
 /** Spoken-subtitle looks measured on the benchmarks: "serif" = @heo.jinny.gogo, "bold" = 런비 lecture shorts. */
 export const SUBTITLE_STYLES = ["serif", "bold"] as const;
 export const TTS_PROVIDERS = ["none", "typecast", "gemini", "elevenlabs", "openai"] as const;
@@ -174,6 +177,12 @@ export const assetSchema = z.object({
   faceChecked: z.boolean().optional(),
   /** Untouched copy kept when faces were mosaicked, so the mosaic can be undone; server-managed. */
   originalFile: z.string().optional(),
+  /** In-flight season-image job (Replicate); server-managed. */
+  seasonJobId: z.string().optional(),
+  /** Season painted onto this photo by AI (the photo is now a 9:16 seasonal image); server-managed. */
+  season: z.enum(["spring", "summer", "autumn", "winter"]).optional(),
+  /** The photo as it was before the season image replaced it, so it can be undone; server-managed. */
+  preSeasonFile: z.string().optional(),
   /** A guest's photo from the listing's best review (not the stay's official photo). */
   fromReview: z.boolean().optional(),
   /** Free scenery added to match the script (Openverse); replaced when the script is regenerated. */
@@ -217,6 +226,8 @@ export const styleSchema = z.object({
   animatePhotos: z.boolean().default(false),
   /** Script generation adds 1~2 free scenery shots (CC0/BY/BY-SA) that fit the lines, credited in the caption. */
   autoScenery: z.boolean().default(true),
+  /** Season for AI season images (photo → seasonal 9:16 image → AI clip). */
+  season: z.enum(SEASONS).default("auto"),
   /** Shows the real-review card (needs a review line). */
   reviewCard: z.boolean().default(true),
   captionPosition: z.enum(CAPTION_POSITIONS).default("bottom"),
@@ -345,6 +356,15 @@ export const settingsSchema = z.object({
   reelAccounts: z.string().max(5000).default(""),
   reelIntervalHours: z.number().int().min(1).max(24).default(3),
   metaTokenRefreshedAt: z.string().default(""),
+  /** "내 설정을 기본값으로": look and voice copied onto every new project. */
+  projectDefaults: z
+    .object({
+      style: patchOf(styleSchema.omit({ bgmFile: true, logoFile: true })),
+      voice: patchOf(voiceSchema),
+    })
+    // null = cleared by the user (undefined would be dropped from the JSON patch and keep the old value).
+    .nullable()
+    .optional(),
 });
 
 export type Product = z.infer<typeof productSchema>;

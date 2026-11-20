@@ -9,11 +9,25 @@ import { videoPoster } from "@/lib/client/video-poster";
 import { planMediaUpload } from "@/lib/media-pair";
 import { animateTargets, type PhotoGroup } from "@/lib/photo-groups";
 import { quoteFromNotes } from "@/lib/review-quote";
-import { CLIP_COST_USD, DEFAULT_REPLICATE_MODEL, KRW_PER_USD } from "@/lib/replicate-models";
+import { CLIP_COST_USD, DEFAULT_REPLICATE_MODEL, KRW_PER_USD, SEASON_IMAGE_COST_USD } from "@/lib/replicate-models";
+import { resolveSeason, SEASON_LABELS } from "@/lib/script/season-prompts";
 import { replicateReady, visionReady } from "@/lib/settings-view";
-import { CATEGORIES, MAX_ASSETS, type Category, type Product, type Project } from "@/lib/types";
-import { animatePath, AssetVideoClip, VIDEO_ACCEPT, waitForAnimate, type AnimateResult } from "./AssetVideoClip";
+import { CATEGORIES, MAX_ASSETS, SEASONS, type Category, type Product, type Project, type Season } from "@/lib/types";
+import { ANIMATE_POLL_MS, animatePath, AssetVideoClip, VIDEO_ACCEPT, waitForAnimate, type AnimateResult } from "./AssetVideoClip";
 import type { StepProps } from "./useProjectEditor";
+
+type SeasonResult = { project: Project; status: "starting" | "processing" | "succeeded" | "failed"; error?: string };
+
+const seasonPath = (projectId: string, assetId: string) => `/api/projects/${projectId}/assets/${assetId}/season`;
+
+async function waitForSeason(editor: StepProps["editor"], projectId: string, assetId: string): Promise<SeasonResult> {
+  while (true) {
+    const result = await editor.run(() => api<SeasonResult>(seasonPath(projectId, assetId)));
+    if (result.status === "succeeded") return result;
+    if (result.status === "failed") throw new Error(result.error || "계절 이미지 만들기가 실패했어요.");
+    await new Promise((resolve) => setTimeout(resolve, ANIMATE_POLL_MS));
+  }
+}
 
 const CATEGORY_LABELS: Record<Category, string> = {
   stay: "숙소",
@@ -70,6 +84,8 @@ export function ProductStep({ project, editor, settings }: StepProps) {
   const [importing, setImporting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [batching, setBatching] = useState(false);
+  /** Asset id whose season image is being made or undone, or "batch". */
+  const [seasoning, setSeasoning] = useState<string | null>(null);
   /** "all" while mosaicking, or the asset id being restored. */
   const [facing, setFacing] = useState<string | null>(null);
   /** Photos ticked for one batch of AI clips. */
@@ -269,6 +285,45 @@ export function ProductStep({ project, editor, settings }: StepProps) {
     }
   }
 
+  /** Photo → seasonal 9:16 image (the instructor's step before the AI clip). Clips already made are skipped. */
+  async function seasonImages(targets: typeof assets, key: string) {
+    const todo = targets.filter((a) => !a.videoFile && !a.animateJobId);
+    if (todo.length === 0) {
+      toast.error("AI 영상이 이미 붙은 사진은 계절 이미지로 바꿀 수 없어요.");
+      return;
+    }
+    setSeasoning(key);
+    let ok = 0;
+    try {
+      for (const asset of todo) {
+        try {
+          await editor.run(() => api<SeasonResult>(seasonPath(project.id, asset.id), { method: "POST" }));
+          await waitForSeason(editor, project.id, asset.id);
+          ok += 1;
+        } catch (error) {
+          toast.error(`${asset.label || "사진"}: ${errorMessage(error)}`);
+        }
+      }
+      if (ok > 0) toast.success(`${SEASON_LABELS[season]} 이미지 ${ok}장으로 바꿨어요. 마음에 들면 AI 영상으로 만들어 보세요.`);
+    } finally {
+      setSeasoning(null);
+    }
+  }
+
+  async function undoSeason(assetId: string) {
+    setSeasoning(assetId);
+    try {
+      await editor.run(() => api<{ project: Project }>(seasonPath(project.id, assetId), { method: "DELETE" }));
+      toast.success("원래 사진으로 되돌렸어요.");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setSeasoning(null);
+    }
+  }
+
+  const season = resolveSeason(project.style.season);
+  const busy = batching || seasoning !== null;
   const pickedAssets = assets.filter((a) => picked.has(a.id));
   const clipCost = CLIP_COST_USD[settings?.replicateModel ?? ""] ?? CLIP_COST_USD[DEFAULT_REPLICATE_MODEL];
 
@@ -477,6 +532,39 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                 />
                 대본에 맞는 무료 풍경 컷 넣기
               </label>
+              {canReplicate ? (
+                <label
+                  className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold text-fg"
+                  title="사진을 AI 영상으로 만들기 전에, 이 계절 느낌을 입힌 9:16 이미지로 먼저 바꿔요."
+                >
+                  계절
+                  <select
+                    aria-label="계절 이미지 계절"
+                    className="rounded-md bg-transparent py-0.5 text-xs font-semibold outline-none"
+                    value={project.style.season}
+                    disabled={busy}
+                    onChange={(e) => editor.change("style", (s) => ({ ...s, season: e.target.value as Season }))}
+                  >
+                    {SEASONS.map((value) => (
+                      <option key={value} value={value}>
+                        {value === "auto" ? `자동 (지금은 ${SEASON_LABELS[resolveSeason("auto")]})` : SEASON_LABELS[value]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              {canReplicate && pickedAssets.length > 0 ? (
+                <Button
+                  size="sm"
+                  onClick={() => void seasonImages(pickedAssets, "batch")}
+                  loading={seasoning === "batch"}
+                  disabled={uploading || busy}
+                  title={`사진을 ${SEASON_LABELS[season]} 느낌의 9:16 이미지로 먼저 바꿔요. 한 장에 약 ${Math.round(SEASON_IMAGE_COST_USD * KRW_PER_USD)}원 · Replicate 요금`}
+                >
+                  ① 선택한 {pickedAssets.length}장 {SEASON_LABELS[season]} 이미지로 · 약{" "}
+                  {Math.round(pickedAssets.length * SEASON_IMAGE_COST_USD * KRW_PER_USD).toLocaleString("ko-KR")}원
+                </Button>
+              ) : null}
               {canReplicate && pickedAssets.length > 0 ? (
                 <Button
                   size="sm"
@@ -486,7 +574,7 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                   disabled={uploading}
                   title={`한 장에 약 $${clipCost} (약 ${Math.round(clipCost * KRW_PER_USD)}원) · Replicate 요금`}
                 >
-                  선택한 {pickedAssets.length}장 AI 영상으로 · 약 {Math.round(pickedAssets.length * clipCost * KRW_PER_USD).toLocaleString("ko-KR")}원
+                  ② 선택한 {pickedAssets.length}장 AI 영상으로 · 약 {Math.round(pickedAssets.length * clipCost * KRW_PER_USD).toLocaleString("ko-KR")}원
                 </Button>
               ) : null}
               {canReplicate && pickedAssets.length === 0 && animateTargets(assets).length > 0 ? (
@@ -564,9 +652,9 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                       // eslint-disable-next-line @next/next/no-img-element -- user media served by our own API
                       <img src={projectFileUrl(project.id, asset.file)} alt={asset.label} className="size-full object-cover" />
                     )}
-                    {asset.videoFile ? null : asset.animateJobId ? (
+                    {asset.videoFile ? null : asset.animateJobId || asset.seasonJobId ? (
                       <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-xs font-bold text-white">
-                        만드는 중…
+                        {asset.seasonJobId ? "계절 이미지 만드는 중…" : "만드는 중…"}
                       </span>
                     ) : null}
                     <span className="absolute top-2 left-2 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-bold text-white">
@@ -575,13 +663,13 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                     {canReplicate ? (
                       <label
                         className="absolute bottom-2 left-2 flex cursor-pointer items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-[11px] font-bold text-white"
-                        title="체크한 사진을 한 번에 AI 영상으로 만들어요"
+                        title="체크한 사진을 한 번에 계절 이미지나 AI 영상으로 만들어요"
                       >
                         <input
                           type="checkbox"
                           className="size-4 accent-[var(--color-accent)]"
                           checked={picked.has(asset.id)}
-                          disabled={batching || Boolean(asset.animateJobId)}
+                          disabled={busy || Boolean(asset.animateJobId || asset.seasonJobId)}
                           onChange={(e) =>
                             setPicked((prev) => {
                               const next = new Set(prev);
@@ -591,12 +679,16 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                             })
                           }
                         />
-                        AI 영상
+                        선택
                       </label>
                     ) : null}
                     {asset.videoFile ? (
                       <span className="absolute top-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                        영상
+                        {asset.season ? `${SEASON_LABELS[asset.season]} · 영상` : "영상"}
+                      </span>
+                    ) : asset.season ? (
+                      <span className="absolute top-2 right-2 rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        {SEASON_LABELS[asset.season]} 이미지
                       </span>
                     ) : asset.fromReview ? (
                       <span className="absolute top-2 right-2 rounded-md bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -659,12 +751,36 @@ export function ProductStep({ project, editor, settings }: StepProps) {
                         {facing === asset.id ? "되돌리는 중…" : "모자이크 취소"}
                       </button>
                     ) : null}
+                    {canReplicate && !asset.videoFile && !asset.animateJobId ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => void seasonImages([asset], asset.id)}
+                          loading={seasoning === asset.id || Boolean(asset.seasonJobId)}
+                          disabled={busy || Boolean(asset.seasonJobId)}
+                          title={`사진을 ${SEASON_LABELS[season]} 느낌의 9:16 이미지로 바꿔요 (약 ${Math.round(SEASON_IMAGE_COST_USD * KRW_PER_USD)}원). 원본은 보관돼요.`}
+                        >
+                          {asset.season ? `${SEASON_LABELS[season]} 이미지 다시` : `${SEASON_LABELS[season]} 이미지로`}
+                        </Button>
+                        {asset.preSeasonFile ? (
+                          <button
+                            type="button"
+                            onClick={() => void undoSeason(asset.id)}
+                            disabled={busy}
+                            className="shrink-0 text-xs text-muted underline-offset-2 hover:text-fg hover:underline disabled:opacity-50"
+                          >
+                            원래 사진
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <AssetVideoClip
                       projectId={project.id}
                       asset={asset}
                       editor={editor}
                       canReplicate={canReplicate}
-                      locked={batching}
+                      locked={busy}
                     />
                   </div>
                 </li>

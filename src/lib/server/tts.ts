@@ -1,6 +1,7 @@
 import { parseBuffer } from "music-metadata";
 import { ELEVENLABS_DEFAULT_VOICE, GEMINI_VOICES, TYPECAST_VOICES, type Project, type Settings, type Voice } from "../types";
-import { deleteProjectFile, saveAudioFile } from "./assets";
+import { trimSpeechSilence } from "./audio-trim";
+import { deleteProjectFile, detectAudioExt, saveAudioFile } from "./assets";
 
 async function fetchAudio(url: string, init: RequestInit): Promise<Buffer> {
   const res = await fetch(url, { ...init, signal: AbortSignal.timeout(60_000) });
@@ -130,7 +131,9 @@ export async function generateNarration(project: Project, settings: Settings): P
       scenes.push({ ...scene, audioFile: undefined, audioDurationSec: undefined });
       continue;
     }
-    const buffer = await synthesize(text, project.voice, settings);
+    const raw = await synthesize(text, project.voice, settings);
+    // TTS pads every line with silence; cut it so subtitles follow each other without dead air.
+    const buffer = await trimSpeechSilence(raw, detectAudioExt(raw), await audioDurationSec(raw));
     const audioFile = await saveAudioFile(project.id, buffer, scene.id);
     scenes.push({ ...scene, audioFile, audioDurationSec: await audioDurationSec(buffer) });
   }

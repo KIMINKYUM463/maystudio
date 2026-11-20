@@ -88,7 +88,7 @@ describe("video props", () => {
   it("stretches a scene to fit its narration only when a voice is enabled", () => {
     const scene = { ...project.scenes[0], durationSec: 2, audioFile: "audio/a.mp3", audioDurationSec: 3 };
     expect(sceneDurationSec(scene, false)).toBe(2);
-    expect(sceneDurationSec(scene, true)).toBeCloseTo(3.35);
+    expect(sceneDurationSec(scene, true)).toBeCloseTo(3.2);
     const voiced = { ...project, voice: { ...project.voice, provider: "openai" as const }, scenes: [scene] };
     const props = buildVideoProps(voiced, (f) => f);
     expect(props.scenes[0].audioSrc).toBe("audio/a.mp3");

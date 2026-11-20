@@ -39,8 +39,15 @@ export function createEmptyProject(
     assets: [],
     scenes: [],
     // New projects start on the benchmark template (@heo.jinny.gogo style spoken-subtitle reel).
-    style: styleSchema.parse({ template: "review", watermark: defaults.instagramHandle ?? "" }),
-    voice: defaultVoice(defaults),
+    // "내 설정을 기본값으로" wins over the built-in starting look and voice.
+    style: styleSchema.parse({
+      template: "review",
+      watermark: defaults.instagramHandle ?? "",
+      ...defaults.projectDefaults?.style,
+    }),
+    voice: defaults.projectDefaults?.voice
+      ? voiceSchema.parse({ ...defaultVoice(defaults), ...defaults.projectDefaults.voice })
+      : defaultVoice(defaults),
     copy: copySchema.parse({ commentKeyword: defaults.defaultCommentKeyword ?? "숙소" }),
     render: { status: "idle", progress: 0 },
   });
