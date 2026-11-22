@@ -4,7 +4,7 @@ import { timeChunks } from "../lib/script/subtitles";
 import type { Style } from "../lib/types";
 import type { VideoProduct, VideoScene } from "../lib/video/props";
 import { Caption, Pill, PriceBadge, SAFE_BOTTOM, SAFE_TOP, SceneMedia, Subtitles, useEntrance } from "./components";
-import { FONT, type Theme } from "./theme";
+import { FONT, MAY_SUBTITLE, maySubtitleFont, type Theme } from "./theme";
 
 type SceneProps = {
   scene: VideoScene;
@@ -184,12 +184,26 @@ const BOLD_SUBTITLES = { font: FONT.display, size: 120, centerY: 0.5, stroke: 18
 
 const SubtitleScene: React.FC<SceneProps> = ({ scene, theme, style }) => {
   const bold = style.subtitleStyle === "bold";
-  const maxChars = bold ? BOLD_SUBTITLES.maxChars : undefined;
+  const may = style.subtitleStyle === "may";
+  const maxChars = bold ? BOLD_SUBTITLES.maxChars : may ? MAY_SUBTITLE.maxChars : undefined;
   const chunks = useMemo(
     () => timeChunks(scene.narration || scene.caption.replace(/\n/g, " "), scene.durationInFrames, maxChars),
     [scene.narration, scene.caption, scene.durationInFrames, maxChars],
   );
   if (!theme.subtitles) return null;
+  if (may) {
+    const font = maySubtitleFont(style);
+    return (
+      <Subtitles
+        chunks={chunks}
+        font={font.family}
+        size={font.size}
+        centerY={MAY_SUBTITLE.centerY}
+        stroke={MAY_SUBTITLE.stroke}
+        may={{ weight: font.weight, letterSpacing: MAY_SUBTITLE.letterSpacing, shadow: MAY_SUBTITLE.shadow }}
+      />
+    );
+  }
   // A picked font replaces the bold preset's font too; size and outline stay.
   const look = bold ? { ...BOLD_SUBTITLES, font: theme.subtitles.font === FONT.serif ? BOLD_SUBTITLES.font : theme.subtitles.font } : { ...theme.subtitles, stroke: 0 };
   return (

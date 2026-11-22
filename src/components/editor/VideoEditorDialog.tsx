@@ -6,7 +6,7 @@ import { toast } from "@/components/toast";
 import { buttonClass, cx, Spinner } from "@/components/ui";
 import { api, errorMessage, projectFileUrl } from "@/lib/client/api";
 import { speechSeconds } from "@/lib/script/subtitles";
-import type { CoverTemplate, Project, Scene } from "@/lib/types";
+import { COVER_FONTS, type CoverTemplate, type Project, type Scene } from "@/lib/types";
 import { FPS, transitionFramesFor, type VideoProps } from "@/lib/video/props";
 import { BigPreview, ExpandIcon } from "./BigPreview";
 import { CopyStep } from "./CopyStep";
@@ -33,7 +33,12 @@ const COVER_OPTIONS: { id: CoverTemplate; label: string; hint: string }[] = [
   { id: "price", label: "가격 강조", hint: "큰 가격 스티커" },
   { id: "frame", label: "감성 프레임", hint: "사진 액자 · 종이" },
   { id: "split", label: "위아래 분할", hint: "사진 + 색 블록" },
+  { id: "may", label: "메이 썸네일", hint: "색 한 줄 + 흰 한 줄" },
 ];
+
+/** 메이 썸네일 first-line colours from her CSS; any other colour can be typed in. */
+const MAY_LINE_COLORS = ["#00F0FF", "#A5F49D", "#FFE600", "#FF8FC7", "#C77DFF"];
+const COVER_FONT_LABELS: Record<(typeof COVER_FONTS)[number], string> = { konkon: "콘콘체", yache: "야체", paperlogy: "페이퍼로지" };
 
 const TABS = [
   { id: "scenes", label: "장면" },
@@ -375,6 +380,58 @@ export function VideoEditorDialog({
                           <span className="sr-only">{project.style.coverInVideo ? "켜짐" : "꺼짐"}</span>
                         </button>
                       </label>
+                      {project.style.coverTemplate === "may" ? (
+                        <div className="mt-4 grid gap-4 rounded-xl border border-line bg-surface-2 px-4 py-3 sm:grid-cols-2">
+                          <div>
+                            <p className="text-sm font-bold">썸네일 글꼴</p>
+                            <div className="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label="썸네일 글꼴">
+                              {COVER_FONTS.map((font) => (
+                                <button
+                                  key={font}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={project.style.coverFont === font}
+                                  onClick={() => editor.change("style", (s) => ({ ...s, coverFont: font }))}
+                                  className={cx(
+                                    "rounded-lg border px-3 py-1.5 text-xs font-semibold transition",
+                                    project.style.coverFont === font ? "border-accent bg-accent text-white" : "border-line bg-surface hover:border-accent/40",
+                                  )}
+                                >
+                                  {COVER_FONT_LABELS[font]}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold">첫 줄 색</p>
+                            <div className="mt-2 flex items-center gap-1.5" role="radiogroup" aria-label="썸네일 첫 줄 색">
+                              {MAY_LINE_COLORS.map((color) => (
+                                <button
+                                  key={color}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={project.style.coverLineColor === color}
+                                  aria-label={color}
+                                  onClick={() => editor.change("style", (s) => ({ ...s, coverLineColor: color }))}
+                                  className={cx(
+                                    "size-7 rounded-full border-2 transition",
+                                    project.style.coverLineColor === color ? "border-fg" : "border-white shadow",
+                                  )}
+                                  style={{ background: color }}
+                                />
+                              ))}
+                              <input
+                                type="color"
+                                aria-label="첫 줄 색 직접 고르기"
+                                value={project.style.coverLineColor}
+                                onChange={(e) => editor.change("style", (s) => ({ ...s, coverLineColor: e.target.value.toUpperCase() }))}
+                                className="size-7 cursor-pointer rounded-full border border-line bg-transparent"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-muted sm:col-span-2">둘째 줄은 항상 흰색이에요. 글자가 넘치면 150px에서 4px씩 줄여 최소 110px까지 맞춰요.</p>
+                        </div>
+                      ) : null}
                       <p className="mt-6 text-sm font-bold">커버 문구</p>
                       <p className="mt-1 text-xs text-muted">2줄, 숫자·가격이 앞에 오면 프로필 격자에서 잘 보여요.</p>
                       {scenes[0] ? (

@@ -77,19 +77,26 @@ type MediaProps = { camera: CameraMove; intensity: number; accent: string; durat
  * gets Ken Burns. Captions, badges, logo — motion graphics — live in SceneView above this
  * and are never turned off just because a clip exists.
  */
-const Shot: React.FC<MediaProps & { shot: VideoShot }> = ({ shot, ...media }) => (
-  <AbsoluteFill>
-    <CameraImage src={shot.imageSrc} {...media} intensity={shot.videoSrc ? 0 : media.intensity} />
-    {shot.videoSrc ? (
-      <OffthreadVideo
-        src={shot.videoSrc}
-        muted
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: GRADE.clip }}
-      />
-    ) : null}
-    <AbsoluteFill style={{ background: GRADE.vignette }} />
-  </AbsoluteFill>
-);
+/** AI clips open on a still frame for ~0.5s, which reads as a stutter at every cut: start past it. */
+export const CLIP_LEAD_TRIM_SEC = 0.5;
+
+const Shot: React.FC<MediaProps & { shot: VideoShot }> = ({ shot, ...media }) => {
+  const { fps } = useVideoConfig();
+  return (
+    <AbsoluteFill>
+      <CameraImage src={shot.imageSrc} {...media} intensity={shot.videoSrc ? 0 : media.intensity} />
+      {shot.videoSrc ? (
+        <OffthreadVideo
+          src={shot.videoSrc}
+          trimBefore={Math.round(CLIP_LEAD_TRIM_SEC * fps)}
+          muted
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: GRADE.clip }}
+        />
+      ) : null}
+      <AbsoluteFill style={{ background: GRADE.vignette }} />
+    </AbsoluteFill>
+  );
+};
 
 /** Splits a scene evenly across its shots (kit: cut every 1~1.5s under one narration line). */
 export const SceneMedia: React.FC<MediaProps & { shots: VideoShot[] }> = ({ shots, camera, durationInFrames, ...rest }) => {
@@ -266,6 +273,25 @@ export const Logo: React.FC<{ src: string | null; height?: number; top?: number;
     />
   ) : null;
 
+/** 메이 스타일 "[광고]": Pretendard Light 53px, 50% white, centred at (980, 87); never on the cover frame. */
+export const MayAdLabel: React.FC = () => (
+  <div
+    style={{
+      position: "absolute",
+      left: 980,
+      top: 87,
+      transform: "translate(-50%, -50%)",
+      fontFamily: FONT.sans,
+      fontWeight: 300,
+      fontSize: 53,
+      color: "rgba(255,255,255,0.5)",
+      whiteSpace: "nowrap",
+    }}
+  >
+    [광고]
+  </div>
+);
+
 /** Benchmark-style small "(광고)" in the top-right corner. */
 /** Design review: at 86px it sat under the Reels camera icon and vanished on bright photos. */
 export const CornerAdLabel: React.FC<{ top?: number; size?: number }> = ({ top = 200, size = 36 }) => (
@@ -300,7 +326,9 @@ export const Subtitles: React.FC<{
   stroke?: number;
   /** Motion graphics on: numbers in the accent colour and a quick pop as each phrase appears. */
   accent?: string;
-}> = ({ chunks, font, size, centerY, stroke = 0, accent }) => {
+  /** 메이 스타일: exact CSS values (weight, letter-spacing, black outline + glow, no band, one line). */
+  may?: { weight: number; letterSpacing: number; shadow: string };
+}> = ({ chunks, font, size, centerY, stroke = 0, accent, may }) => {
   const frame = useCurrentFrame();
   const current = chunks.find((c) => frame >= c.from && frame < c.from + c.durationInFrames);
   if (!current) return null;
@@ -310,11 +338,13 @@ export const Subtitles: React.FC<{
   return (
     <AbsoluteFill style={{ alignItems: "center", pointerEvents: "none" }}>
       {/* Soft band behind the subtitle line so it reads over bright skies and busy foliage. */}
-      <AbsoluteFill
-        style={{
-          background: `linear-gradient(180deg, transparent ${(centerY - 0.12) * 100}%, rgba(0,0,0,0.22) ${centerY * 100}%, transparent ${(centerY + 0.12) * 100}%)`,
-        }}
-      />
+      {may ? null : (
+        <AbsoluteFill
+          style={{
+            background: `linear-gradient(180deg, transparent ${(centerY - 0.12) * 100}%, rgba(0,0,0,0.22) ${centerY * 100}%, transparent ${(centerY + 0.12) * 100}%)`,
+          }}
+        />
+      )}
       <div
         style={{
           position: "absolute",
@@ -322,17 +352,22 @@ export const Subtitles: React.FC<{
           transform: `translateY(-50%) scale(${pop})`,
           padding: "0 60px",
           fontFamily: font,
-          fontWeight: stroke ? 400 : 800,
+          fontWeight: may ? may.weight : stroke ? 400 : 800,
           fontSize: size,
           lineHeight: 1.25,
+          letterSpacing: may ? may.letterSpacing : undefined,
+          whiteSpace: may ? "nowrap" : undefined,
           color: "#fff",
           textAlign: "center",
           wordBreak: "keep-all",
-          WebkitTextStroke: stroke ? `${stroke}px #111` : "3px rgba(0,0,0,0.55)",
+          // Stroke is centred on the outline, so 28px draws 14px outside once paint-order puts it behind the fill.
+          WebkitTextStroke: may ? `${stroke}px #000` : stroke ? `${stroke}px #111` : "3px rgba(0,0,0,0.55)",
           paintOrder: "stroke fill",
-          textShadow: stroke
-            ? "0 6px 0 rgba(0,0,0,0.5)"
-            : "0 2px 3px rgba(0,0,0,0.95), 0 0 14px rgba(0,0,0,0.75), 0 0 36px rgba(0,0,0,0.45)",
+          textShadow: may
+            ? may.shadow
+            : stroke
+              ? "0 6px 0 rgba(0,0,0,0.5)"
+              : "0 2px 3px rgba(0,0,0,0.95), 0 0 14px rgba(0,0,0,0.75), 0 0 36px rgba(0,0,0,0.45)",
         }}
       >
         {accent
@@ -347,7 +382,7 @@ export const Overlay: React.FC<{ style: Style; theme: Theme; logoSrc: string | n
   theme.overlay === "corner" ? (
     <AbsoluteFill style={{ pointerEvents: "none" }}>
       <Logo src={logoSrc} />
-      {style.showAdLabel ? <CornerAdLabel /> : null}
+      {style.showAdLabel ? style.subtitleStyle === "may" ? <MayAdLabel /> : <CornerAdLabel /> : null}
       {style.watermark ? (
         <div
           style={{

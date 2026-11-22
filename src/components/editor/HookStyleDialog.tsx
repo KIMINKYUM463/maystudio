@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cx } from "@/components/ui";
 import { HOOK_STYLE_GUIDES } from "@/lib/script/hook-styles";
+import { MAY_HOOK_STYLES, mayBeats } from "@/lib/script/may-prompt";
 import { HOOK_ANGLE_LABELS } from "@/lib/script/hooks";
 import { HOOK_ANGLES, type HookAngle } from "@/lib/types";
 
@@ -31,7 +32,9 @@ export function HookStyleDialog({
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
-  const guide = HOOK_STYLE_GUIDES[viewing];
+  // 메이 프롬프트: her formula and example script (on the fixed 0~2 / 2~11 / 11~20 / 20~25초 timeline);
+  // "잘 맞아요" and "주의할 점" stay as on-screen help only.
+  const guide = { ...HOOK_STYLE_GUIDES[viewing], formula: MAY_HOOK_STYLES[viewing].formula, beats: mayBeats(viewing) };
   const label = HOOK_ANGLE_LABELS[viewing];
 
   return (

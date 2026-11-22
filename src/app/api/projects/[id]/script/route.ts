@@ -39,6 +39,7 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
     try {
       const result = await rewriteWithLlm(project, scenes, settings);
       scenes = applyTextOverrides(scenes, result.overrides);
+      if (result.drop?.length) scenes = scenes.filter((s) => !result.drop!.includes(s.id));
       if (project.style.template === "review") {
         scenes = refitReviewShots(scenes, project.assets, shotSecFor(project.style));
       }

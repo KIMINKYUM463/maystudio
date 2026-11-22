@@ -5,7 +5,8 @@ import { DEFAULT_REPLICATE_MODEL } from "./replicate-models";
 /** "review": first-person story reel benchmarked on @heo.jinny.gogo (spoken subtitles, hard cuts, cover + carousel). */
 export const TEMPLATE_IDS = ["review", "emotional", "deal", "luxury"] as const;
 /** Cover (thumbnail) designs; "auto" follows the video template. */
-export const COVER_TEMPLATES = ["auto", "bold", "magazine", "card", "price", "frame", "split"] as const;
+/** "may" = 메이 강사님 썸네일 (two lines, picked colour then white, black outline + glow). */
+export const COVER_TEMPLATES = ["auto", "bold", "magazine", "card", "price", "frame", "split", "may"] as const;
 export const CAMERA_MOVES = [
   "push-in",
   "pull-out",
@@ -61,14 +62,26 @@ export const CAPTION_POSITIONS = ["top", "center", "bottom"] as const;
 /** Season painted onto photos before they become AI clips; "auto" follows today's month. */
 export const SEASONS = ["auto", "spring", "summer", "autumn", "winter"] as const;
 export type Season = (typeof SEASONS)[number];
-/** Spoken-subtitle looks measured on the benchmarks: "serif" = @heo.jinny.gogo, "bold" = 런비 lecture shorts. */
-export const SUBTITLE_STYLES = ["serif", "bold"] as const;
+/**
+ * Spoken-subtitle looks: "serif" = @heo.jinny.gogo, "bold" = 런비 lecture shorts,
+ * "may" = 메이 강사님 스타일 (KonKon 96px at y 561, thick black outline, faint [광고]).
+ */
+export const SUBTITLE_STYLES = ["serif", "bold", "may"] as const;
+/** Fonts the 메이 cover can use (ids of FONT_CHOICES). */
+export const COVER_FONTS = ["konkon", "yache", "paperlogy"] as const;
+export type CoverFont = (typeof COVER_FONTS)[number];
 export const TTS_PROVIDERS = ["none", "typecast", "gemini", "elevenlabs", "openai"] as const;
 export const LLM_PROVIDERS = ["none", "openai", "anthropic", "gemini"] as const;
 export const PROJECT_STATUSES = ["draft", "scripted", "rendering", "done", "error"] as const;
 export const OPENAI_VOICES = ["nova", "shimmer", "coral", "alloy", "echo", "onyx", "sage"] as const;
 /** ElevenLabs premade multilingual voice ("Rachel"); users can paste any voice id. */
 export const ELEVENLABS_DEFAULT_VOICE = "21m00Tcm4TlvDq8ikWAM";
+/** ElevenLabs voices in the picker; any other voice id can still be pasted. */
+export const ELEVENLABS_VOICES = [
+  { id: ELEVENLABS_DEFAULT_VOICE, label: "Rachel · 기본 다국어 여성", name: "Rachel", tone: "기본 다국어 여성", gender: "female" },
+  // Added for 메이 강사님's test (2026-11-22).
+  { id: "NU1tHVnbwK9fMSQOPvwb", label: "메이 테스트 목소리", name: "메이 테스트", tone: "메이 강사님이 추가한 목소리", gender: "female" },
+] as const;
 /** Korean voices picked for travel reels (Typecast ssfm-v30); the first is the default. */
 export const TYPECAST_VOICES = [
   { id: "tc_692799c46508f6b9468c54c7", label: "다은 · 밝은 쇼츠 톤", name: "다은", tone: "밝고 경쾌한 쇼츠 톤", gender: "female" },
@@ -213,6 +226,12 @@ export const styleSchema = z.object({
   coverTemplate: z.enum(COVER_TEMPLATES).default("auto"),
   /** Puts the cover on the reel's first frame (~0.03s) so Instagram's auto cover is the designed one. */
   coverInVideo: z.boolean().default(false),
+  /** 메이 cover: font and first-line colour (the second line is always white). */
+  coverFont: z.enum(COVER_FONTS).default("konkon"),
+  coverLineColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .default("#00F0FF"),
   bgmTrack: z.enum(BGM_TRACKS).default("calm"),
   /** Whoosh on scene changes, an impact on the hook, a ding on the closing line. */
   sfx: z.boolean().default(true),

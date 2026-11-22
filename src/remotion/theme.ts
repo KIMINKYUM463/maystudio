@@ -112,3 +112,24 @@ export function themeFor(style: Pick<Style, "template" | "font">): Theme {
     ...(base.subtitles ? { subtitles: { ...base.subtitles, font: family } } : {}),
   };
 }
+
+/**
+ * 메이 강사님 스타일 (메이_썸네일_자막_스타일.css, 1080x1920): subtitle centred at y 561, KonKon 96px
+ * (Gmarket 86px, Pretendard SemiBold 96px), letter-spacing 8px, 14px black outline + 16px black glow.
+ */
+export const MAY_SUBTITLE = { centerY: 561 / 1920, letterSpacing: 8, stroke: 28, shadow: "0 0 16px #000", maxChars: 9 };
+
+export function maySubtitleFont(style: Pick<Style, "font">): { family: string; size: number; weight: number } {
+  if (style.font === "gmarket") return { family: "GmarketSansBold", size: 86, weight: 400 };
+  if (style.font === "pretendard") return { family: FONT.sans, size: 96, weight: 600 };
+  return { family: fontFamilyFor(style.font === "auto" ? "konkon" : style.font) ?? "OnglyphKonKon", size: 96, weight: 700 };
+}
+
+/** Font choices a reel needs loaded: the subtitle pick, KonKon for the 메이 default, and the 메이 cover font. */
+export function fontChoicesFor(style: Pick<Style, "font" | "subtitleStyle" | "coverTemplate" | "coverFont">): string[] {
+  return [
+    style.font,
+    style.subtitleStyle === "may" && style.font === "auto" ? "konkon" : "",
+    style.coverTemplate === "may" ? style.coverFont : "",
+  ].filter(Boolean);
+}

@@ -28,7 +28,7 @@ import { COVERS } from "./covers";
 import { MotionLayer, MusicLayer, ReviewQuoteLayer, SoundEffects } from "./motion";
 import { ensureFonts } from "./fonts";
 import { SceneView } from "./SceneView";
-import { FONT, themeFor, type Theme } from "./theme";
+import { FONT, fontChoicesFor, themeFor, type Theme } from "./theme";
 
 type AnyPresentation = TransitionPresentation<Record<string, unknown>>;
 
@@ -40,18 +40,19 @@ function presentationFor(theme: Theme): AnyPresentation {
   return fade() as AnyPresentation;
 }
 
-function useFonts(choice = "auto"): boolean {
+function useFonts(style: VideoProps["style"]): boolean {
+  const key = fontChoicesFor(style).join("|");
   const { delayRender, continueRender, cancelRender } = useDelayRender();
   const [handle] = useState(() => delayRender("Loading fonts"));
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    ensureFonts(choice)
+    ensureFonts(...key.split("|"))
       .then(() => {
         setReady(true);
         continueRender(handle);
       })
       .catch((err) => cancelRender(err));
-  }, [handle, continueRender, cancelRender, choice]);
+  }, [handle, continueRender, cancelRender, key]);
   return ready;
 }
 
@@ -61,7 +62,7 @@ const Blank: React.FC = () => (
 
 export const TravelShort: React.FC<VideoProps> = (props) => {
   const { scenes, style, product, bgmSrc, logoSrc } = props;
-  const fontsReady = useFonts(props.style.font);
+  const fontsReady = useFonts(props.style);
   const theme = themeFor(style);
   if (!fontsReady) return <Blank />;
   const views = scenes.map((scene) => (
@@ -186,7 +187,7 @@ const ReviewCover: React.FC<{
 /** Reels cover image: first scene, static caption, price badge. */
 export const Thumbnail: React.FC<VideoProps> = (props) => {
   const { scenes, style, product } = props;
-  const fontsReady = useFonts(props.style.font);
+  const fontsReady = useFonts(props.style);
   const theme = themeFor(style);
   const hook = scenes.find((s) => s.kind === "hook") ?? scenes[0];
   if (!fontsReady || !hook) return <Blank />;
@@ -259,7 +260,7 @@ const SLIDE_SHADOW = "0 0 8px rgba(0,0,0,0.45), 0 2px 10px rgba(0,0,0,0.5)";
  * two-line hook; story slides = 2~3 lines of plain white text; the rest are photo-only.
  */
 export const CarouselSlideStill: React.FC<CarouselProps> = (props) => {
-  const fontsReady = useFonts(props.style.font);
+  const fontsReady = useFonts(props.style);
   const slide = carouselSlides(props)[props.slideIndex];
   if (!fontsReady || !slide) return <Blank />;
   const { style } = props;

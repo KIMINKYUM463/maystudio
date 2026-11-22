@@ -1,8 +1,9 @@
 import React from "react";
 import { AbsoluteFill, Img } from "remotion";
-import type { CoverTemplate } from "../lib/types";
+import type { CoverFont, CoverTemplate } from "../lib/types";
 import type { VideoProps } from "../lib/video/props";
 import { Logo } from "./components";
+import { fontFamilyFor } from "./font-choices";
 import { FONT } from "./theme";
 
 /**
@@ -230,7 +231,65 @@ const Split: React.FC<CoverProps> = ({ imageSrc, text, props }) => {
   );
 };
 
+/** Advance widths (em) measured from the font files' hmtx: Hangul, space, everything else. */
+const COVER_FONT_METRICS: Record<CoverFont, { hangul: number; space: number; other: number }> = {
+  konkon: { hangul: 0.73, space: 0.3, other: 0.5 },
+  yache: { hangul: 0.63, space: 0.21, other: 0.47 },
+  paperlogy: { hangul: 0.88, space: 0.22, other: 0.67 },
+};
+
+export function lineWidthEm(line: string, font: CoverFont = "konkon"): number {
+  const m = COVER_FONT_METRICS[font];
+  let em = 0;
+  for (const ch of line) em += ch === " " ? m.space : /[가-힣ㄱ-ㆎ]/.test(ch) ? m.hangul : m.other;
+  return em;
+}
+
+/** 메이 cover rule: start at 150px, shrink 4px at a time until every line fits 864px (80% width), never below 110px. */
+export function mayCoverSize(text: string, font: CoverFont = "konkon"): number {
+  const widest = Math.max(0.01, ...lines(text).map((l) => lineWidthEm(l, font)));
+  let size = 150;
+  while (size > 110 && widest * size > 864) size -= 4;
+  return size;
+}
+
+/**
+ * 메이 썸네일 (메이_썸네일_자막_스타일.css): two centred lines from y 470, first line in the picked colour,
+ * second white, 7px black outline (paint-order keeps it behind the glyph) and a heavy black glow.
+ */
+const May: React.FC<CoverProps> = ({ imageSrc, text, props }) => {
+  const size = mayCoverSize(text, props.style.coverFont);
+  const family = fontFamilyFor(props.style.coverFont) ?? FONT.display;
+  return (
+    <AbsoluteFill style={{ background: "#000" }}>
+      <Photo src={imageSrc} />
+      <div style={{ position: "absolute", top: 470, left: 0, right: 0, textAlign: "center" }}>
+        {lines(text)
+          .slice(0, 2)
+          .map((line, i) => (
+            <div
+              key={i}
+              style={{
+                fontFamily: family,
+                fontSize: size,
+                lineHeight: 1.16,
+                whiteSpace: "nowrap",
+                color: i === 0 ? props.style.coverLineColor : "#FFFFFF",
+                WebkitTextStroke: "14px #000",
+                paintOrder: "stroke fill",
+                textShadow: "0 0 16px #000, 0 0 16px #000, 0 0 16px #000",
+              }}
+            >
+              {line}
+            </div>
+          ))}
+      </div>
+    </AbsoluteFill>
+  );
+};
+
 export const COVERS: Record<Exclude<CoverTemplate, "auto">, React.FC<CoverProps>> = {
+  may: May,
   bold: Bold,
   magazine: Magazine,
   card: Card,

@@ -15,6 +15,7 @@ const FramePreview = dynamic(() => import("./FramePreview"), {
 const LOOKS: { key: string; label: string; note: string; template: TemplateId; subtitleStyle?: Style["subtitleStyle"] }[] = [
   { key: "review-serif", label: "허지니형", note: "명조 말자막 · 1.1초 컷", template: "review", subtitleStyle: "serif" },
   { key: "review-bold", label: "런비형", note: "굵은 고딕 말자막 · 정중앙", template: "review", subtitleStyle: "bold" },
+  { key: "review-may", label: "메이형", note: "콘콘체 말자막 · [광고]", template: "review", subtitleStyle: "may" },
   { key: "emotional", label: "감성 스테이", note: "명조 · 페이드 · 느린 카메라", template: "emotional" },
   { key: "deal", label: "가성비 특가", note: "굵은 고딕 · 외곽선 · 빠른 전환", template: "deal" },
   { key: "luxury", label: "럭셔리 호캉스", note: "얇은 고딕 · 골드 포인트", template: "luxury" },

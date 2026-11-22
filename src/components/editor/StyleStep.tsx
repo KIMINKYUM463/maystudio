@@ -19,6 +19,7 @@ import {
   CAPTION_POSITIONS,
   SUBTITLE_STYLES,
   ELEVENLABS_DEFAULT_VOICE,
+  ELEVENLABS_VOICES,
   GEMINI_VOICES,
   TYPECAST_VOICES,
   OPENAI_VOICES,
@@ -76,6 +77,7 @@ const POSITION_LABELS: Record<Style["captionPosition"], string> = {
 const SUBTITLE_STYLE_LABELS: Record<Style["subtitleStyle"], string> = {
   serif: "명조 · 허지니형",
   bold: "굵은 고딕 · 런비형",
+  may: "메이 스타일",
 };
 const PROVIDER_LABELS: Record<Voice["provider"], string> = {
   none: "음성 없음",
@@ -115,13 +117,13 @@ const VOICE_CHARACTERS: {
       ? "female"
       : "male") as "female" | "male",
   })),
-  {
-    provider: "elevenlabs",
-    id: ELEVENLABS_DEFAULT_VOICE,
-    name: "Rachel",
-    tone: "기본 다국어 여성",
-    gender: "female",
-  },
+  ...ELEVENLABS_VOICES.map((v) => ({
+    provider: "elevenlabs" as const,
+    id: v.id,
+    name: v.name,
+    tone: v.tone,
+    gender: v.gender,
+  })),
 ];
 const defaultVoiceId = (provider: Voice["provider"]) =>
   provider === "typecast"

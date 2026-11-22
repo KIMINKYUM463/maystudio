@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cx, Spinner } from "@/components/ui";
 import { ttsReady, type MaskedSettings } from "@/lib/settings-view";
-import { GEMINI_VOICES, OPENAI_VOICES, TYPECAST_VOICES, type Voice } from "@/lib/types";
+import { ELEVENLABS_VOICES, GEMINI_VOICES, OPENAI_VOICES, TYPECAST_VOICES, type Voice } from "@/lib/types";
 import { VoiceAvatar } from "./VoiceAvatar";
 
 type Provider = Exclude<Voice["provider"], "none">;
@@ -26,7 +26,7 @@ const OPENAI_CHARACTERS: Character[] = OPENAI_VOICES.map((v) => ({
 const CHARACTERS: Record<Provider, Character[]> = {
   typecast: TYPECAST_VOICES.map((v) => ({ id: v.id, name: v.name, tone: v.tone, gender: v.gender })),
   gemini: GEMINI_VOICES.map((v) => ({ id: v.id, name: v.name, tone: v.tone, gender: v.gender })),
-  elevenlabs: [{ id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", tone: "기본 다국어 여성", gender: "female" }],
+  elevenlabs: ELEVENLABS_VOICES.map((v) => ({ id: v.id, name: v.name, tone: v.tone, gender: v.gender })),
   openai: OPENAI_CHARACTERS,
 };
 
